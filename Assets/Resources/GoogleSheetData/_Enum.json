@@ -1,0 +1,82 @@
+{
+    "TableName": "_Enum",
+    "Columns": [
+        "SkillTriggerType",
+        "SkillLaunchType",
+        "SkillActivationType",
+        "SkillParamType",
+        "SkillEndType"
+    ],
+    "Types": [
+        "OnTick",
+        "InstantAOE",
+        "",
+        "ProcChance",
+        "Duration"
+    ],
+    "Rows": [
+        {
+            "Values": [
+                "OnAttack",
+                "LinearAOE",
+                "",
+                "Cooldown",
+                "HitCount"
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "PropAOE",
+                "",
+                "Damage",
+                "PierceCount"
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "",
+                "",
+                "SpawnCount",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "",
+                "",
+                "SearchRange",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "",
+                "",
+                "HitBoxScale",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "",
+                "",
+                "HitCount",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "",
+                "",
+                "ChainCount",
+                ""
+            ]
+        }
+    ]
+}

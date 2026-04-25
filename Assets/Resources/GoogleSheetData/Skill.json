@@ -1,0 +1,46 @@
+{
+    "TableName": "Skill",
+    "Columns": [
+        "id",
+        "group_id",
+        "name",
+        "desc",
+        "path"
+    ],
+    "Types": [
+        "int",
+        "int",
+        "string",
+        "string",
+        "string"
+    ],
+    "Rows": [
+        {
+            "Values": [
+                "1",
+                "1",
+                "",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "2",
+                "101",
+                "",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "3",
+                "201",
+                "",
+                "",
+                ""
+            ]
+        }
+    ]
+}
