@@ -1,0 +1,73 @@
+{
+    "TableName": "SkillBuff",
+    "Columns": [
+        "id",
+        "name",
+        "desc",
+        "type",
+        "duration",
+        "tick_interval",
+        "value0",
+        "value1"
+    ],
+    "Types": [
+        "int",
+        "string",
+        "string",
+        "EBuffType",
+        "float",
+        "float",
+        "float",
+        "float"
+    ],
+    "Rows": [
+        {
+            "Values": [
+                "1",
+                "DamageBoost30",
+                "공격력 +30% / 5초",
+                "DamageBoost",
+                "5",
+                "0",
+                "0.3",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "2",
+                "Heal5ps",
+                "초당 5 HP / 10초",
+                "HealOverTime",
+                "10",
+                "1",
+                "5",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "3",
+                "Shield100",
+                "100 흡수 / 6초",
+                "Shield",
+                "6",
+                "0",
+                "100",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "4",
+                "AttackSpeed20",
+                "공속 +20% / 4초",
+                "AttackSpeedBoost",
+                "4",
+                "0",
+                "0.2",
+                ""
+            ]
+        }
+    ]
+}

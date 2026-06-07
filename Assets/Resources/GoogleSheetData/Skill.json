@@ -2,43 +2,43 @@
     "TableName": "Skill",
     "Columns": [
         "id",
-        "group_id",
         "name",
         "desc",
-        "path"
+        "max_level",
+        "visual_path"
     ],
     "Types": [
         "int",
+        "string",
+        "string",
         "int",
-        "string",
-        "string",
         "string"
     ],
     "Rows": [
         {
             "Values": [
-                "1",
-                "1",
-                "",
-                "",
+                "1001",
+                "Chain Strike",
+                "OnAttack 시 가장 가까운 적에게 폭발",
+                "5",
                 ""
             ]
         },
         {
             "Values": [
-                "2",
-                "101",
-                "",
-                "",
+                "1002",
+                "Periodic Strike",
+                "5초마다 화면 내 랜덤 적 1명 타격",
+                "5",
                 ""
             ]
         },
         {
             "Values": [
-                "3",
-                "201",
-                "",
-                "",
+                "1003",
+                "Split Bolt",
+                "OnAttack 시 가장 가까운 적 방향으로 직선 발사",
+                "5",
                 ""
             ]
         }

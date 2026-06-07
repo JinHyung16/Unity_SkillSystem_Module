@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7e1220cbb024ae44a7de643016fcbde, type: 3}
+  m_Name: DefaultLoadout
+  m_EditorClassIdentifier:
+  Entries:
+  - SkillId: 1001
+    Level: 1
+    SlotKey: 113
+  - SkillId: 1002
+    Level: 1
+    SlotKey: 101
+  - SkillId: 1003
+    Level: 1
+    SlotKey: 114

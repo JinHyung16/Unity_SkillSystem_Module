@@ -1,80 +1,296 @@
 {
     "TableName": "_Enum",
     "Columns": [
-        "SkillTriggerType",
-        "SkillLaunchType",
-        "SkillActivationType",
-        "SkillParamType",
-        "SkillEndType"
+        "ESkillTriggerType",
+        "ESkillNodeType",
+        "ESkillParamKey",
+        "EBuffType",
+        "EDebuffType"
     ],
     "Types": [
-        "OnTick",
-        "InstantAOE",
-        "",
-        "ProcChance",
-        "Duration"
+        "None",
+        "None",
+        "None",
+        "None",
+        "None"
     ],
     "Rows": [
         {
             "Values": [
+                "OnTick",
+                "Sequence",
+                "Cooldown",
+                "DamageBoost",
+                "DamageOverTime"
+            ]
+        },
+        {
+            "Values": [
                 "OnAttack",
-                "LinearAOE",
+                "Selector",
+                "Chance",
+                "AttackSpeedBoost",
+                "SlowReduce"
+            ]
+        },
+        {
+            "Values": [
+                "OnOreBreak",
+                "Parallel",
+                "Threshold",
+                "HealOverTime",
+                "DamageReceiveIncrease"
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "Inverter",
+                "Range",
+                "Shield",
+                "Stun"
+            ]
+        },
+        {
+            "Values": [
                 "",
                 "Cooldown",
-                "HitCount"
+                "Index",
+                "",
+                ""
             ]
         },
         {
             "Values": [
                 "",
-                "PropAOE",
+                "Chance",
+                "HalfAngle",
                 "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "OnTickTrigger",
+                "Angle",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "OnAttackTrigger",
+                "Absolute",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "OnOreBreakTrigger",
                 "Damage",
-                "PierceCount"
-            ]
-        },
-        {
-            "Values": [
                 "",
-                "",
-                "",
-                "SpawnCount",
                 ""
             ]
         },
         {
             "Values": [
                 "",
+                "SelfTargeting",
+                "Radius",
                 "",
-                "",
-                "SearchRange",
                 ""
             ]
         },
         {
             "Values": [
                 "",
+                "AreaNearTargeting",
+                "Length",
                 "",
-                "",
-                "HitBoxScale",
                 ""
             ]
         },
         {
             "Values": [
                 "",
+                "AreaFarTargeting",
+                "Width",
                 "",
-                "",
-                "HitCount",
                 ""
             ]
         },
         {
             "Values": [
                 "",
+                "AreaRandomTargeting",
+                "DamageInterval",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "ScreenAllTargeting",
+                "MaxPerTarget",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "NearestDirectionTargeting",
+                "Value",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "RayTargeting",
+                "Speed",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "SingleHit",
+                "MaxDistance",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "AoEHit",
+                "Duration",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "BeamHit",
+                "ArcHeight",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "ChainLightningHit",
+                "MaxBounces",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "DeathChainHit",
+                "Visual",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "DurationDespawn",
+                "RequireAll",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "OnHitDespawn",
+                "ModifierKey",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "OnBounceLimitDespawn",
+                "BuffId",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "OnWallHitDespawn",
+                "DebuffId",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "InstantLaunch",
                 "",
                 "",
-                "ChainCount",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "StraightLaunch",
+                "",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "ParabolicLaunch",
+                "",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "CurveLaunch",
+                "",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "ApplyBuffSelf",
+                "",
+                "",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "",
+                "ApplyDebuffOnHit",
+                "",
+                "",
                 ""
             ]
         }
