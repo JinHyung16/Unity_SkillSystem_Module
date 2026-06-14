@@ -5,6 +5,8 @@ using UnityEngine.UI;
 using Jinhyeong_Character;
 using Jinhyeong_Managers;
 using Jinhyeong_SkillSystem;
+using Jinhyeong_Common;
+using TMPro;
 
 namespace Jinhyeong_UI
 {
@@ -13,16 +15,15 @@ namespace Jinhyeong_UI
     {
         public KeyCode Key = KeyCode.None;
         public Button Button;
-        public Text Label;
+        public TextMeshProUGUI Label;
     }
 
     /// <summary>게임 시작 화면 컨트롤러. Canvas/Button/Text는 prefab에서 구성하고 SerializeField로 참조만 받음(코드 자체 생성 없음). SkillRegistry 비동기 로드 → 슬롯 라벨 갱신 → GAME START 클릭 시 동적 SkillLoadout 생성 → Player.SkillObject에 장착 → GameFlow.StartGame(). GameFlow가 Resources/Prefabs/StartScreen.prefab을 자동 Instantiate하므로 Main.unity 직접 수정은 불필요.</summary>
-    [DisallowMultipleComponent]
-    public class StartScreen : MonoBehaviour
+    public class StartScreen : BaseBehaviour
     {
         [Header("UI Refs")]
         [SerializeField] private GameObject _root;
-        [SerializeField] private Text _statusText;
+        [SerializeField] private TextMeshProUGUI _statusText;
         [SerializeField] private Button _startButton;
         [SerializeField] private List<StartScreenSlot> _slots = new List<StartScreenSlot>();
 
@@ -31,16 +32,25 @@ namespace Jinhyeong_UI
 
         private void Awake()
         {
-            if (_startButton != null)
-            {
-                _startButton.interactable = false;
-                _startButton.onClick.AddListener(OnStartClicked);
-            }
+            if (RequireRef(_root, nameof(_root)) == false)
+                return;
+            if (RequireRef(_statusText, nameof(_statusText)) == false)
+                return;
+            if (RequireRef(_startButton, nameof(_startButton)) == false)
+                return;
+
+            _startButton.interactable = false;
+            _startButton.onClick.AddListener(OnStartClicked);
 
             for (int i = 0; i < _slots.Count; i++)
             {
                 StartScreenSlot s = _slots[i];
-                if (s == null || s.Button == null) continue;
+                if (s == null || s.Button == null || s.Label == null)
+                {
+                    Debug.LogError($"[StartScreen] _slots[{i}] 구성 누락 — Button/Label을 인스펙터에서 바인딩해야 함", this);
+                    enabled = false;
+                    return;
+                }
                 KeyCode captured = s.Key;
                 s.Button.onClick.AddListener(() => OnSlotClicked(captured));
             }
@@ -55,6 +65,10 @@ namespace Jinhyeong_UI
                 catch (Exception e) { SetStatus($"스킬 로드 실패: {e.Message}"); return; }
             }
 
+            SetStatus("스킬 이펙트 로딩 중...");
+            try { await SkillRegistry.PreloadVisualsAsync(); }
+            catch (Exception e) { Debug.LogWarning($"[StartScreen] VFX 사전로드 실패(폴백으로 진행): {e.Message}"); }
+
             CollectAvailableSkills();
             AssignDefaults();
             RefreshSlotLabels();
@@ -62,7 +76,7 @@ namespace Jinhyeong_UI
             SetStatus(_availableSkillIds.Count > 0
                 ? $"사용 가능 스킬 {_availableSkillIds.Count}개 · 슬롯을 클릭해 변경"
                 : "사용 가능 스킬 없음 (Resources/GoogleSheetData 확인)");
-            if (_startButton != null) _startButton.interactable = true;
+            _startButton.interactable = true;
         }
 
         private void CollectAvailableSkills()
@@ -70,7 +84,8 @@ namespace Jinhyeong_UI
             _availableSkillIds.Clear();
             foreach (SkillDefinition def in SkillRegistry.All)
             {
-                if (def == null || def.Meta == null) continue;
+                if (def == null || def.Meta == null)
+                    continue;
                 _availableSkillIds.Add(def.Meta.Id);
             }
             _availableSkillIds.Sort();
@@ -82,17 +97,22 @@ namespace Jinhyeong_UI
 
             Player player = GameEvents.CurrentPlayer;
             SkillLoadout existing = null;
-            if (player != null && player.Skills != null) existing = player.Skills.Loadout;
+            if (player != null && player.Skills != null)
+                existing = player.Skills.Loadout;
 
             if (existing != null && existing.Entries != null)
             {
                 for (int i = 0; i < existing.Entries.Count; i++)
                 {
                     EquippedSkillEntry e = existing.Entries[i];
-                    if (e == null) continue;
-                    if (e.SlotKey == KeyCode.None) continue;
-                    if (HasSlot(e.SlotKey) == false) continue;
-                    if (_availableSkillIds.Contains(e.SkillId) == false) continue;
+                    if (e == null)
+                        continue;
+                    if (e.SlotKey == KeyCode.None)
+                        continue;
+                    if (HasSlot(e.SlotKey) == false)
+                        continue;
+                    if (_availableSkillIds.Contains(e.SkillId) == false)
+                        continue;
                     _slotSkillId[e.SlotKey] = e.SkillId;
                 }
             }
@@ -101,8 +121,10 @@ namespace Jinhyeong_UI
             for (int i = 0; i < _slots.Count; i++)
             {
                 KeyCode k = _slots[i].Key;
-                if (k == KeyCode.None) continue;
-                if (_slotSkillId.ContainsKey(k)) continue;
+                if (k == KeyCode.None)
+                    continue;
+                if (_slotSkillId.ContainsKey(k))
+                    continue;
                 if (cursor < _availableSkillIds.Count)
                 {
                     _slotSkillId[k] = _availableSkillIds[cursor++];
@@ -118,14 +140,16 @@ namespace Jinhyeong_UI
         {
             for (int i = 0; i < _slots.Count; i++)
             {
-                if (_slots[i].Key == key) return true;
+                if (_slots[i].Key == key)
+                    return true;
             }
             return false;
         }
 
         private void OnSlotClicked(KeyCode slot)
         {
-            if (_availableSkillIds.Count == 0) return;
+            if (_availableSkillIds.Count == 0)
+                return;
             int current = _slotSkillId.TryGetValue(slot, out int v) ? v : 0;
             int idx = _availableSkillIds.IndexOf(current);
             idx = (idx + 1) % _availableSkillIds.Count;
@@ -138,8 +162,6 @@ namespace Jinhyeong_UI
             for (int i = 0; i < _slots.Count; i++)
             {
                 StartScreenSlot s = _slots[i];
-                if (s == null || s.Label == null) continue;
-
                 int id = _slotSkillId.TryGetValue(s.Key, out int v) ? v : 0;
                 string skillName = "(없음)";
                 if (id != 0)
@@ -149,37 +171,52 @@ namespace Jinhyeong_UI
                     {
                         skillName = def.Meta.Name;
                     }
-                    else skillName = $"#{id}";
+                    else
+                        skillName = $"#{id}";
                 }
                 s.Label.text = $"[{s.Key}]\n{skillName}";
             }
         }
 
-        private void OnStartClicked()
+        private async void OnStartClicked()
         {
+            _startButton.interactable = false;
+
             SkillLoadout lo = ScriptableObject.CreateInstance<SkillLoadout>();
             lo.Entries = new List<EquippedSkillEntry>(_slotSkillId.Count);
             foreach (KeyValuePair<KeyCode, int> kv in _slotSkillId)
             {
-                if (kv.Value == 0) continue;
+                if (kv.Value == 0)
+                    continue;
                 lo.Entries.Add(new EquippedSkillEntry { SkillId = kv.Value, Level = 1, SlotKey = kv.Key });
             }
 
+            // 씬에 미리 박힌 플레이어가 있으면 그쪽에 장착, 없으면 Addressables로 스폰.
             Player player = GameEvents.CurrentPlayer;
             if (player != null && player.Skills != null)
             {
                 player.Skills.Loadout = lo;
                 player.Skills.EquipAll();
             }
+            else
+            {
+                SetStatus("월드 로딩 중...");
+                try { await Jinhyeong_Managers.WorldSpawner.SpawnPlayerWorldAsync(lo, Vector3.zero); }
+                catch (Exception e)
+                {
+                    SetStatus($"스폰 실패: {e.Message}");
+                    _startButton.interactable = true;
+                    return;
+                }
+            }
 
             GameFlow.StartGame();
-            GameObject target = _root != null ? _root : gameObject;
-            target.SetActive(false);
+            _root.SetActive(false);
         }
 
         private void SetStatus(string text)
         {
-            if (_statusText != null) _statusText.text = text;
+            _statusText.text = text;
         }
     }
 }

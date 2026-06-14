@@ -1,34 +1,14 @@
-using System;
 using UnityEngine;
-using Jinhyeong_GeneratedEnums;
-using Jinhyeong_Managers;
+using Jinhyeong_Common;
 
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>캐릭터 GO의 진입점 컴포넌트. 입력/AI에서 호출하는 스킬 발동 트리거와 디스폰 통지를 이벤트로 노출해 SkillManager/CharacterManager가 구독.</summary>
-    [DisallowMultipleComponent]
-    public class Playable : MonoBehaviour
+    /// <summary>캐릭터 GO에서 카메라 배치 기준이 되는 CameraRoot를 보유하는 홀더 컴포넌트. 프리팹에서 SerializeField로 바인딩하며 WorldSpawner가 카메라 스폰 위치로 사용.</summary>
+    public class Playable : BaseBehaviour
     {
-        public string PoolKey = PoolManager.KeyEmpty;
+        [SerializeField] private GameObject _cameraRoot;
 
-        public event Action<Playable, ESkillTriggerType> OnSkillFire;
-
-        public void RaiseSkillFire(ESkillTriggerType type)
-        {
-            OnSkillFire?.Invoke(this, type);
-        }
-
-        public event Action<Playable> OnDespawning;
-
-        public void NotifyDespawning()
-        {
-            OnDespawning?.Invoke(this);
-        }
-
-        public void Clear()
-        {
-            OnSkillFire = null;
-            OnDespawning = null;
-        }
+        /// <summary>카메라가 스폰될 때 배치 기준이 되는 루트.</summary>
+        public Transform CameraRoot { get { return _cameraRoot != null ? _cameraRoot.transform : null; } }
     }
 }

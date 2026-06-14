@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Jinhyeong_Common;
 
 namespace Jinhyeong_Managers
 {
-    /// <summary>Skill/Character/Enemy 카테고리별 Queue 풀을 관리하는 싱글톤. partial로 분할되며 풀 미스 시 AddressableManager 캐시에서 Instantiate. Addressables 미로드 시 Resources/Prefabs 경로로 자동 폴백.</summary>
-    [DisallowMultipleComponent]
-    public partial class PoolManager : MonoBehaviour
+    /// <summary>스킬 VFX의 Queue 풀을 관리하는 싱글톤. 풀 미스 시 AddressableManager 캐시에서 Instantiate. Addressables 미로드 시 Resources/Prefabs 경로로 자동 폴백.</summary>
+    public partial class PoolManager : BaseBehaviour
     {
         public const string KeyEmpty = "Empty";
 
@@ -36,7 +36,18 @@ namespace Jinhyeong_Managers
                 return;
             }
             Instance = this;
-            if (PoolRoot == null) PoolRoot = transform;
+            DontDestroyOnLoad(gameObject);
+            if (PoolRoot == null)
+                PoolRoot = transform;
+        }
+
+        /// <summary>씬에 없을 때 코드로 싱글톤을 생성·보장. 반드시 메인 스레드에서 호출.</summary>
+        public static PoolManager Ensure()
+        {
+            if (Instance != null)
+                return Instance;
+            GameObject go = new GameObject("_PoolManager");
+            return go.AddComponent<PoolManager>();
         }
 
         private void OnDestroy()
@@ -51,14 +62,13 @@ namespace Jinhyeong_Managers
         public void Clear()
         {
             Pool_Skill_Clear();
-            Pool_Character_Clear();
-            Pool_Enemy_Clear();
         }
 
         private GameObject InstantiateFromAddressable(string key)
         {
             GameObject prefab = ResolvePrefab(key);
-            if (prefab == null) return null;
+            if (prefab == null)
+                return null;
             return Instantiate(prefab, PoolRoot);
         }
 
@@ -67,10 +77,12 @@ namespace Jinhyeong_Managers
             // 1) Addressables 캐시
             AddressableManager am = AddressableManager.Instance;
             GameObject prefab = am != null ? am.Get(key) : null;
-            if (prefab != null) return prefab;
+            if (prefab != null)
+                return prefab;
 
             // 2) Resources 폴백 (메모리 캐시)
-            if (_resourcesCache.TryGetValue(key, out prefab) && prefab != null) return prefab;
+            if (_resourcesCache.TryGetValue(key, out prefab) && prefab != null)
+                return prefab;
 
             for (int i = 0; i < ResourcesPathPrefixes.Length; i++)
             {

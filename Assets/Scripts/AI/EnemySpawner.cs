@@ -6,15 +6,27 @@ using Jinhyeong_Managers;
 
 namespace Jinhyeong_AI
 {
-    /// <summary>Enemy 프리팹 풀을 관리하며 플레이어 등장 시 주변에 원형 배치로 초기 스폰한다. 사망 요청 시 비활성화 후 풀로 반환.</summary>
-    [DisallowMultipleComponent]
-    public class EnemySpawner : MonoBehaviour
+    /// <summary>Enemy 프리팹(OBJ_Enemy)을 Addressables로 로드해 풀을 관리하고 플레이어 등장 시 주변에 원형 배치로 초기 스폰하는 싱글톤. 씬에 둘 필요 없이 GameInitializer가 코드로 보장.</summary>
+    public class EnemySpawner : BaseBehaviour
     {
+        public static EnemySpawner Instance { get; private set; }
+
+        /// <summary>씬에 없을 때 코드로 싱글톤을 생성·보장. 반드시 메인 스레드에서 호출.</summary>
+        public static EnemySpawner Ensure()
+        {
+            if (Instance != null)
+                return Instance;
+            GameObject go = new GameObject("_EnemySpawner");
+            return go.AddComponent<EnemySpawner>();
+        }
+
         [Header("Pool")]
-        [SerializeField] private Enemy _prefab;
-        [SerializeField] private string _resourcePath = "Prefabs/OBJ_Enemy";
+        [Tooltip("Enemy 프리팹의 Addressables 주소.")]
+        [SerializeField] private string _addressableKey = "obj_enemy";
         [SerializeField] private Transform _poolRoot;
         [SerializeField] private Transform _spawnAroundTarget;
+
+        private Enemy _prefab; // 어드레서블에서 해석한 프리팹 캐시.
 
         private readonly Queue<Enemy> _pool = new Queue<Enemy>(16);
         private readonly List<Enemy> _active = new List<Enemy>(16);
@@ -25,17 +37,34 @@ namespace Jinhyeong_AI
 
         private void Awake()
         {
-            if (_poolRoot == null) _poolRoot = transform;
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            if (_poolRoot == null)
+                _poolRoot = transform;
         }
 
-        private void OnEnable()
+        private void OnDestroy()
         {
+            if (Instance == this)
+                Instance = null;
+        }
+
+        protected override void OnEnabled()
+        {
+            if (Instance != this)
+                return;
             GameEvents.OnPlayerSpawned += HandlePlayerSpawned;
             GameEvents.OnPlayerDespawned += HandlePlayerDespawned;
-            if (GameEvents.CurrentPlayer != null) HandlePlayerSpawned(GameEvents.CurrentPlayer);
+            if (GameEvents.CurrentPlayer != null)
+                HandlePlayerSpawned(GameEvents.CurrentPlayer);
         }
 
-        private void OnDisable()
+        protected override void OnDisabled()
         {
             GameEvents.OnPlayerSpawned -= HandlePlayerSpawned;
             GameEvents.OnPlayerDespawned -= HandlePlayerDespawned;
@@ -43,14 +72,18 @@ namespace Jinhyeong_AI
 
         private void Start()
         {
+            if (Instance != this)
+                return;
             Prewarm();
             TryInitialSpawn();
         }
 
         private void HandlePlayerSpawned(Player p)
         {
-            if (p == null) return;
-            if (_spawnAroundTarget == null) _spawnAroundTarget = p.transform;
+            if (p == null)
+                return;
+            if (_spawnAroundTarget == null)
+                _spawnAroundTarget = p.transform;
             TryInitialSpawn();
         }
 
@@ -67,7 +100,8 @@ namespace Jinhyeong_AI
             for (int i = 0; i < CommonConfig.Spawner.PrewarmCount; i++)
             {
                 Enemy e = CreateInstance();
-                if (e == null) return;
+                if (e == null)
+                    return;
                 e.gameObject.SetActive(false);
                 _pool.Enqueue(e);
             }
@@ -75,8 +109,10 @@ namespace Jinhyeong_AI
 
         private void TryInitialSpawn()
         {
-            if (_initialSpawnDone) return;
-            if (_spawnAroundTarget == null) return;
+            if (_initialSpawnDone)
+                return;
+            if (_spawnAroundTarget == null)
+                return;
 
             Vector3 center = _spawnAroundTarget.position;
             int count = CommonConfig.Spawner.InitialEnemyCount;
@@ -96,13 +132,15 @@ namespace Jinhyeong_AI
             if (_pool.Count > 0)
             {
                 e = _pool.Dequeue();
-                if (e == null) return Spawn(position);
+                if (e == null)
+                    return Spawn(position);
                 e.gameObject.SetActive(true);
             }
             else
             {
                 e = CreateInstance();
-                if (e == null) return null;
+                if (e == null)
+                    return null;
             }
 
             e.OnDespawnRequested -= HandleEnemyDespawnRequested;
@@ -113,9 +151,37 @@ namespace Jinhyeong_AI
             return e;
         }
 
+        /// <summary>활성/풀 적을 모두 파괴하고 스폰 상태를 초기화한다. GameInitializer가 종료/재시작 시 호출.
+        /// 적 인스턴스는 DontDestroyOnLoad인 이 스포너의 자식이라 씬 리로드로는 정리되지 않으므로 명시적으로 파괴.</summary>
+        public void Clear()
+        {
+            for (int i = _active.Count - 1; i >= 0; i--)
+            {
+                Enemy e = _active[i];
+                if (e == null)
+                    continue;
+                e.OnDespawnRequested -= HandleEnemyDespawnRequested;
+                if (e.gameObject != null)
+                    Destroy(e.gameObject);
+            }
+            _active.Clear();
+
+            while (_pool.Count > 0)
+            {
+                Enemy e = _pool.Dequeue();
+                if (e != null && e.gameObject != null)
+                    Destroy(e.gameObject);
+            }
+
+            _initialSpawnDone = false;
+            _spawnAroundTarget = null;
+            _prefab = null; // Addressable 핸들 해제 후 stale 참조 방지 — 다음 스폰 시 재조회.
+        }
+
         public void Despawn(Enemy enemy)
         {
-            if (enemy == null) return;
+            if (enemy == null)
+                return;
             enemy.OnDespawnRequested -= HandleEnemyDespawnRequested;
 
             _active.Remove(enemy);
@@ -132,28 +198,29 @@ namespace Jinhyeong_AI
         private Enemy CreateInstance()
         {
             Enemy prefab = ResolvePrefab();
-            if (prefab == null) return null;
+            if (prefab == null)
+                return null;
             return Instantiate(prefab, _poolRoot, false);
         }
 
         private Enemy ResolvePrefab()
         {
-            if (_prefab != null) return _prefab;
-            if (string.IsNullOrEmpty(_resourcePath))
-            {
-                Debug.LogError("[EnemySpawner] prefab/_resourcePath 모두 비어 있음");
-                return null;
-            }
-            GameObject go = Resources.Load<GameObject>(_resourcePath);
+            if (_prefab != null)
+                return _prefab;
+
+            // Addressables 캐시 전용 (WorldSpawner가 GAME START 시 obj_enemy를 사전로드). 폴백 없음 — 캐시 미스는 시끄럽게 실패.
+            AddressableManager am = AddressableManager.Instance;
+            GameObject go = am != null ? am.Get(_addressableKey) : null;
             if (go == null)
             {
-                Debug.LogError($"[EnemySpawner] Resources/{_resourcePath} 못 찾음");
+                Debug.LogError($"[EnemySpawner] '{_addressableKey}' addressable이 캐시에 없음 — 사전로드(WorldSpawner) 누락 또는 그룹 미등록", this);
                 return null;
             }
+
             _prefab = go.GetComponent<Enemy>();
             if (_prefab == null)
             {
-                Debug.LogError($"[EnemySpawner] '{_resourcePath}' prefab에 Enemy 컴포넌트 없음");
+                Debug.LogError($"[EnemySpawner] '{_addressableKey}' prefab에 Enemy 컴포넌트 없음", this);
             }
             return _prefab;
         }

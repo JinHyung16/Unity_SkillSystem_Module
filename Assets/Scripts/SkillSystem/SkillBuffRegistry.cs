@@ -36,7 +36,8 @@ namespace Jinhyeong_SkillSystem
 
         public static void LoadFromDataManager(DataManager dm)
         {
-            if (dm == null) throw new ArgumentNullException(nameof(dm));
+            if (dm == null)
+                throw new ArgumentNullException(nameof(dm));
             Clear();
             BuildBuffs(dm.GetTable(TableBuff));
             BuildDebuffs(dm.GetTable(TableDebuff));
@@ -44,11 +45,13 @@ namespace Jinhyeong_SkillSystem
 
         private static void BuildBuffs(DataTable t)
         {
-            if (t == null) return;
+            if (t == null)
+                return;
             for (int r = 0; r < t.RowCount; r++)
             {
                 int id = t.GetInt(r, "id");
-                if (id <= 0) continue;
+                if (id <= 0)
+                    continue;
 
                 string typeRaw = t.GetString(r, "type");
                 if (Enum.TryParse(typeRaw, true, out EBuffType type) == false)
@@ -72,11 +75,13 @@ namespace Jinhyeong_SkillSystem
 
         private static void BuildDebuffs(DataTable t)
         {
-            if (t == null) return;
+            if (t == null)
+                return;
             for (int r = 0; r < t.RowCount; r++)
             {
                 int id = t.GetInt(r, "id");
-                if (id <= 0) continue;
+                if (id <= 0)
+                    continue;
 
                 string typeRaw = t.GetString(r, "type");
                 if (Enum.TryParse(typeRaw, true, out EDebuffType type) == false)

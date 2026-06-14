@@ -1,9 +1,10 @@
 using UnityEngine;
+using Jinhyeong_Common;
 
 namespace Jinhyeong_AI.BehaviorTree
 {
     /// <summary>매 Update마다 루트 BTNode를 Tick하는 MonoBehaviour 구동기. Paused로 일시 정지 가능.</summary>
-    public class BehaviorTreeRunner : MonoBehaviour
+    public class BehaviorTreeRunner : BaseBehaviour
     {
         public bool Paused = false;
 
@@ -11,13 +12,15 @@ namespace Jinhyeong_AI.BehaviorTree
 
         public void SetRoot(BTNode root)
         {
-            if (_root != null) _root.Reset();
+            if (_root != null)
+                _root.Reset();
             _root = root;
         }
 
         private void Update()
         {
-            if (Paused || _root == null) return;
+            if (Paused || _root == null)
+                return;
             _root.Tick(Time.deltaTime);
         }
     }

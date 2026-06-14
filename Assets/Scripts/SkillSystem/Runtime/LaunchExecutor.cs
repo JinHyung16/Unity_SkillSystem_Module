@@ -9,7 +9,8 @@ namespace Jinhyeong_SkillSystem
     {
         public static void Execute(CompiledSkill c, SkillContext ctx)
         {
-            if (c == null || c.LaunchNode == null) return;
+            if (c == null || c.LaunchNode == null)
+                return;
 
             switch (c.LaunchNode.NodeType)
             {
@@ -114,7 +115,8 @@ namespace Jinhyeong_SkillSystem
             if (ctx.Targets.Count > 0 && ctx.Caster != null)
             {
                 Vector3 d = ctx.Targets[0].transform.position - ctx.Caster.transform.position;
-                if (d.sqrMagnitude > 0.0001f) return d.normalized;
+                if (d.sqrMagnitude > 0.0001f)
+                    return d.normalized;
             }
             return ctx.Caster != null ? ctx.Caster.transform.forward : Vector3.right;
         }
@@ -122,7 +124,8 @@ namespace Jinhyeong_SkillSystem
         private static SkillEffect EnsureSkillEffect(GameObject go)
         {
             SkillEffect fx = go.GetComponent<SkillEffect>();
-            if (fx == null) fx = go.AddComponent<SkillEffect>();
+            if (fx == null)
+                fx = go.AddComponent<SkillEffect>();
             return fx;
         }
 
@@ -143,7 +146,8 @@ namespace Jinhyeong_SkillSystem
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             go.name = string.IsNullOrEmpty(visualKey) ? "SkillEffect" : visualKey;
             Collider col = go.GetComponent<Collider>();
-            if (col != null) Object.Destroy(col);
+            if (col != null)
+                Object.Destroy(col);
             MeshRenderer mr = go.GetComponent<MeshRenderer>();
             if (mr != null)
             {

@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Jinhyeong_Common;
 
 namespace Jinhyeong_SkillSystem
 {
     /// <summary>피격 가능한 엔티티 컴포넌트. HP/Shield/스턴/속도배율 등 상태이상 영향 필드를 보유하고 전역 인스턴스 목록을 유지해 타게팅이 FindObjects 없이 조회 가능.</summary>
-    [DisallowMultipleComponent]
-    public class Damageable : MonoBehaviour
+    public class Damageable : BaseBehaviour
     {
         public ESkillTeam Team = ESkillTeam.Enemy;
         public float Hp = 100f;
@@ -26,7 +26,7 @@ namespace Jinhyeong_SkillSystem
 
         public bool IsAlive { get { return Hp > 0f; } }
 
-        private void OnEnable()
+        protected override void OnEnabled()
         {
             if (_all.Contains(this) == false)
             {
@@ -34,7 +34,7 @@ namespace Jinhyeong_SkillSystem
             }
         }
 
-        private void OnDisable()
+        protected override void OnDisabled()
         {
             _all.Remove(this);
         }
@@ -46,9 +46,12 @@ namespace Jinhyeong_SkillSystem
             for (int i = 0; i < _all.Count; i++)
             {
                 Damageable d = _all[i];
-                if (d == null) continue;
-                if (d.IsAlive == false) continue;
-                if (d.Team != team) continue;
+                if (d == null)
+                    continue;
+                if (d.IsAlive == false)
+                    continue;
+                if (d.Team != team)
+                    continue;
                 list.Add(d);
             }
             return list;
@@ -56,7 +59,8 @@ namespace Jinhyeong_SkillSystem
 
         public bool TakeDamage(float damage, SkillObject source)
         {
-            if (IsAlive == false) return false;
+            if (IsAlive == false)
+                return false;
 
             float incoming = damage * IncomingDamageMultiplier;
             if (Shield > 0f)
@@ -67,21 +71,25 @@ namespace Jinhyeong_SkillSystem
             }
             Hp -= incoming;
 
-            if (OnHealthChanged != null) OnHealthChanged.Invoke(this);
+            if (OnHealthChanged != null)
+                OnHealthChanged.Invoke(this);
 
             bool died = IsAlive == false;
 
             if (died)
             {
-                if (OnDied != null) OnDied.Invoke(this, source);
-                if (DestroyOnDeath) Destroy(gameObject);
+                if (OnDied != null)
+                    OnDied.Invoke(this, source);
+                if (DestroyOnDeath)
+                    Destroy(gameObject);
             }
             return died;
         }
 
         public void NotifyHealthChanged()
         {
-            if (OnHealthChanged != null) OnHealthChanged.Invoke(this);
+            if (OnHealthChanged != null)
+                OnHealthChanged.Invoke(this);
         }
     }
 }

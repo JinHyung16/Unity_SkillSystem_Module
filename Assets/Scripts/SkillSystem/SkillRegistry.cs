@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Jinhyeong_JsonParsing;
+using Jinhyeong_Managers;
 using UnityEngine;
 using Jinhyeong_GeneratedEnums;
 
@@ -26,7 +28,8 @@ namespace Jinhyeong_SkillSystem
 
         public static void Add(SkillDefinition def)
         {
-            if (def == null || def.Meta == null) return;
+            if (def == null || def.Meta == null)
+                return;
             _byId[def.Meta.Id] = def;
         }
 
@@ -79,7 +82,8 @@ namespace Jinhyeong_SkillSystem
 
         public static void LoadFromDataManager(DataManager dm)
         {
-            if (dm == null) throw new ArgumentNullException(nameof(dm));
+            if (dm == null)
+                throw new ArgumentNullException(nameof(dm));
 
             DataTable skill = dm.GetTable(TableSkill);
             DataTable level = dm.GetTable(TableSkillLevel);
@@ -99,18 +103,38 @@ namespace Jinhyeong_SkillSystem
 
         private static void BuildSkills(DataTable t)
         {
-            if (t == null) return;
+            if (t == null)
+                return;
             for (int r = 0; r < t.RowCount; r++)
             {
                 int id = t.GetInt(r, "id");
-                if (id <= 0) continue;
+                if (id <= 0)
+                    continue;
+
+                ESkillTriggerType trigger = ESkillTriggerType.None;
+                string triggerRaw = t.GetString(r, "trigger");
+                if (string.IsNullOrEmpty(triggerRaw) == false
+                    && Enum.TryParse(triggerRaw, true, out ESkillTriggerType parsedTrigger))
+                {
+                    trigger = parsedTrigger;
+                }
+
+                ESkillCategory category = ESkillCategory.None;
+                string categoryRaw = t.GetString(r, "category");
+                if (string.IsNullOrEmpty(categoryRaw) == false
+                    && Enum.TryParse(categoryRaw, true, out ESkillCategory parsedCategory))
+                {
+                    category = parsedCategory;
+                }
+
                 SkillData meta = new SkillData
                 {
                     Id = id,
                     Name = t.GetString(r, "name"),
                     Description = t.GetString(r, "desc"),
                     MaxLevel = Math.Max(1, t.GetInt(r, "max_level")),
-                    VisualPath = t.GetString(r, "visual_path"),
+                    Trigger = trigger,
+                    Category = category,
                 };
                 Add(new SkillDefinition { Meta = meta });
             }
@@ -118,13 +142,16 @@ namespace Jinhyeong_SkillSystem
 
         private static void BuildLevels(DataTable t)
         {
-            if (t == null) return;
+            if (t == null)
+                return;
             for (int r = 0; r < t.RowCount; r++)
             {
                 int skillId = t.GetInt(r, "skill_id");
-                if (skillId <= 0) continue;
+                if (skillId <= 0)
+                    continue;
                 SkillDefinition def = Get(skillId);
-                if (def == null) continue;
+                if (def == null)
+                    continue;
 
                 SkillLevelData lv = new SkillLevelData
                 {
@@ -137,12 +164,16 @@ namespace Jinhyeong_SkillSystem
                 {
                     string keyCol = "modifier" + slot.ToString(CultureInfo.InvariantCulture);
                     string valCol = "value" + slot.ToString(CultureInfo.InvariantCulture);
-                    if (t.TryGetColumnIndex(keyCol, out _) == false) break;
+                    if (t.TryGetColumnIndex(keyCol, out _) == false)
+                        break;
 
                     string keyRaw = t.GetString(r, keyCol);
-                    if (string.IsNullOrEmpty(keyRaw)) continue;
-                    if (Enum.TryParse(keyRaw, true, out ESkillParamKey key) == false) continue;
-                    if (key == ESkillParamKey.None) continue;
+                    if (string.IsNullOrEmpty(keyRaw))
+                        continue;
+                    if (Enum.TryParse(keyRaw, true, out ESkillParamKey key) == false)
+                        continue;
+                    if (key == ESkillParamKey.None)
+                        continue;
 
                     lv.Modifiers[key] = t.GetFloat(r, valCol);
                 }
@@ -160,16 +191,20 @@ namespace Jinhyeong_SkillSystem
 
         private static void BuildNodes(DataTable t)
         {
-            if (t == null) return;
+            if (t == null)
+                return;
             for (int r = 0; r < t.RowCount; r++)
             {
                 int skillId = t.GetInt(r, "skill_id");
-                if (skillId <= 0) continue;
+                if (skillId <= 0)
+                    continue;
                 SkillDefinition def = Get(skillId);
-                if (def == null) continue;
+                if (def == null)
+                    continue;
 
                 string typeRaw = t.GetString(r, "node_type");
-                if (string.IsNullOrEmpty(typeRaw)) continue;
+                if (string.IsNullOrEmpty(typeRaw))
+                    continue;
                 if (Enum.TryParse(typeRaw, true, out ESkillNodeType nodeType) == false)
                 {
                     Debug.LogWarning($"[SkillRegistry] unknown node_type '{typeRaw}' on skill {skillId} row {r}");
@@ -188,12 +223,16 @@ namespace Jinhyeong_SkillSystem
                 {
                     string keyCol = "param" + slot.ToString(CultureInfo.InvariantCulture);
                     string valCol = "value" + slot.ToString(CultureInfo.InvariantCulture);
-                    if (t.TryGetColumnIndex(keyCol, out _) == false) break;
+                    if (t.TryGetColumnIndex(keyCol, out _) == false)
+                        break;
 
                     string keyRaw = t.GetString(r, keyCol);
-                    if (string.IsNullOrEmpty(keyRaw)) continue;
-                    if (Enum.TryParse(keyRaw, true, out ESkillParamKey key) == false) continue;
-                    if (key == ESkillParamKey.None) continue;
+                    if (string.IsNullOrEmpty(keyRaw))
+                        continue;
+                    if (Enum.TryParse(keyRaw, true, out ESkillParamKey key) == false)
+                        continue;
+                    if (key == ESkillParamKey.None)
+                        continue;
 
                     node.Params[key] = t.GetString(r, valCol) ?? string.Empty;
                 }
@@ -208,6 +247,41 @@ namespace Jinhyeong_SkillSystem
             {
                 def.Nodes.Sort((a, b) => a.Order.CompareTo(b.Order));
             }
+        }
+
+        /// <summary>로드된 전 스킬의 노드 Visual param을 distinct 수집. spawn 시 실제 사용되는 키만 모아 Addressables 사전로드에 쓴다.</summary>
+        public static void CollectVisualKeys(ICollection<string> buffer)
+        {
+            if (buffer == null)
+                return;
+            foreach (SkillDefinition def in _byId.Values)
+            {
+                if (def == null)
+                    continue;
+
+                for (int i = 0; i < def.Nodes.Count; i++)
+                {
+                    SkillNodeData node = def.Nodes[i];
+                    if (node == null)
+                        continue;
+                    string visual = node.GetString(ESkillParamKey.Visual);
+                    if (string.IsNullOrEmpty(visual))
+                        continue;
+                    buffer.Add(visual);
+                }
+            }
+        }
+
+        /// <summary>스킬 VFX 프리팹을 Addressables로 사전로드해 spawn 시 동기 조회가 가능하도록 캐시를 워밍한다. 반드시 메인 스레드에서 호출. AddressableManager가 키를 dedupe하므로 반복 호출 안전.</summary>
+        public static async UniTask PreloadVisualsAsync()
+        {
+            HashSet<string> keys = new HashSet<string>();
+            CollectVisualKeys(keys);
+            if (keys.Count == 0)
+                return;
+
+            AddressableManager am = AddressableManager.Ensure();
+            await am.LoadAllAsync(keys);
         }
     }
 }

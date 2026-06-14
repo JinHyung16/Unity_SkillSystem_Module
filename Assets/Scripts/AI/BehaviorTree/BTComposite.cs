@@ -10,7 +10,8 @@ namespace Jinhyeong_AI.BehaviorTree
 
         public BTComposite Add(BTNode child)
         {
-            if (child != null) _children.Add(child);
+            if (child != null)
+                _children.Add(child);
             return this;
         }
 

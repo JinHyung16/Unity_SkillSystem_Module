@@ -104,8 +104,10 @@ namespace Jinhyeong_SkillSystem
                     {
                         Damageable d = _candidates[i];
                         Vector3 to = d.transform.position - ctx.OriginPosition;
-                        if (to.sqrMagnitude > maxDistSq) continue;
-                        if (Vector3.Dot(to.normalized, ctx.Direction) < 0.7071f) continue;
+                        if (to.sqrMagnitude > maxDistSq)
+                            continue;
+                        if (Vector3.Dot(to.normalized, ctx.Direction) < 0.7071f)
+                            continue;
                         ctx.Targets.Add(d);
                     }
                     return;
@@ -121,7 +123,7 @@ namespace Jinhyeong_SkillSystem
             for (int i = 0; i < _scratch.Count; i++)
             {
                 Damageable d = _scratch[i];
-                float sq = (d.transform.position - origin).sqrMagnitude;
+                float sq = PlanarDistSq(d.transform.position, origin);
                 if (sq <= maxSq && sq < bestSq)
                 {
                     bestSq = sq;
@@ -139,7 +141,7 @@ namespace Jinhyeong_SkillSystem
             for (int i = 0; i < _scratch.Count; i++)
             {
                 Damageable d = _scratch[i];
-                float sq = (d.transform.position - origin).sqrMagnitude;
+                float sq = PlanarDistSq(d.transform.position, origin);
                 if (sq <= maxSq && sq > bestSq)
                 {
                     bestSq = sq;
@@ -156,11 +158,19 @@ namespace Jinhyeong_SkillSystem
             for (int i = 0; i < _scratch.Count; i++)
             {
                 Damageable d = _scratch[i];
-                if ((d.transform.position - origin).sqrMagnitude <= maxSq)
+                if (PlanarDistSq(d.transform.position, origin) <= maxSq)
                 {
                     outList.Add(d);
                 }
             }
+        }
+
+        // XZ 평면 거리 제곱. 캐릭터 발 위치와 발사체 위치의 Y 차이로 인한 miss 방지.
+        private static float PlanarDistSq(Vector3 a, Vector3 b)
+        {
+            float dx = a.x - b.x;
+            float dz = a.z - b.z;
+            return dx * dx + dz * dz;
         }
     }
 }

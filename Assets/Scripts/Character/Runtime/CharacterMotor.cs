@@ -4,9 +4,8 @@ using Jinhyeong_Common;
 namespace Jinhyeong_Character
 {
     /// <summary>MoveAxis 입력과 중력을 합쳐 CharacterController로 이동시키는 컴포넌트. SpeedMultiplier로 외부 버프/디버프 반영.</summary>
-    [DisallowMultipleComponent]
     [RequireComponent(typeof(CharacterController))]
-    public class CharacterMotor : MonoBehaviour
+    public class CharacterMotor : BaseBehaviour
     {
         [HideInInspector] public float MoveSpeed;
         [HideInInspector] public float SpeedMultiplier = 1f;

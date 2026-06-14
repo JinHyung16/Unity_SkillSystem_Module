@@ -12,18 +12,21 @@ namespace Jinhyeong_GeneratedEnums
         OnOreBreak
     }
 
+    public enum ESkillCategory
+    {
+        None,
+        Melee,
+        Projectile,
+        Area,
+        Chain,
+        Buff,
+        Debuff,
+        Combo
+    }
+
     public enum ESkillNodeType
     {
         None,
-        Sequence,
-        Selector,
-        Parallel,
-        Inverter,
-        Cooldown,
-        Chance,
-        OnTickTrigger,
-        OnAttackTrigger,
-        OnOreBreakTrigger,
         SelfTargeting,
         AreaNearTargeting,
         AreaFarTargeting,
@@ -38,14 +41,13 @@ namespace Jinhyeong_GeneratedEnums
         DeathChainHit,
         DurationDespawn,
         OnHitDespawn,
-        OnBounceLimitDespawn,
-        OnWallHitDespawn,
         InstantLaunch,
         StraightLaunch,
         ParabolicLaunch,
         CurveLaunch,
         ApplyBuffSelf,
-        ApplyDebuffOnHit
+        ApplyDebuffOnHit,
+        SpawnSubSkill
     }
 
     public enum ESkillParamKey
@@ -53,12 +55,7 @@ namespace Jinhyeong_GeneratedEnums
         None,
         Cooldown,
         Chance,
-        Threshold,
         Range,
-        Index,
-        HalfAngle,
-        Angle,
-        Absolute,
         Damage,
         Radius,
         Length,
@@ -68,14 +65,13 @@ namespace Jinhyeong_GeneratedEnums
         Value,
         Speed,
         MaxDistance,
-        Duration,
         ArcHeight,
         MaxBounces,
         Visual,
-        RequireAll,
-        ModifierKey,
         BuffId,
-        DebuffId
+        DebuffId,
+        SkillId,
+        Delay
     }
 
     public enum EBuffType

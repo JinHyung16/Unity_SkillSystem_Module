@@ -1,11 +1,11 @@
 using UnityEngine;
+using Jinhyeong_Common;
 using Jinhyeong_Managers;
 
 namespace Jinhyeong_Character
 {
     /// <summary>플레이어 주위를 우클릭 드래그로 yaw/pitch 회전하고 마우스 휠로 zoom in/out 하는 MMORPG식 3인칭 카메라. yaw/pitch/distance를 구면 좌표로 보유하고 LateUpdate에서 SmoothDamp로 위치를 따라가며 LookAt으로 타겟을 응시한다. 입력은 레거시 Input(우클릭, Mouse X/Y, Mouse ScrollWheel).</summary>
-    [DisallowMultipleComponent]
-    public class CameraFollow : MonoBehaviour
+    public class CameraFollow : BaseBehaviour
     {
         [Header("Follow")]
         [Tooltip("타겟 위 회전 중심(카메라가 응시하고 그 주위를 도는 지점).")]
@@ -83,22 +83,24 @@ namespace Jinhyeong_Character
             ApplyFovOverride();
         }
 
-        private void OnEnable()
+        protected override void OnEnabled()
         {
             Active = this;
             GameEvents.OnPlayerSpawned   += HandlePlayerSpawned;
             GameEvents.OnPlayerDespawned += HandlePlayerDespawned;
 
             Player p = GameEvents.CurrentPlayer;
-            if (p != null) _target = p.transform;
+            if (p != null)
+                _target = p.transform;
 
             ApplyFovOverride();
             SnapToTarget();
         }
 
-        private void OnDisable()
+        protected override void OnDisabled()
         {
-            if (Active == this) Active = null;
+            if (Active == this)
+                Active = null;
             GameEvents.OnPlayerSpawned   -= HandlePlayerSpawned;
             GameEvents.OnPlayerDespawned -= HandlePlayerDespawned;
 
@@ -111,14 +113,19 @@ namespace Jinhyeong_Character
 
         private void HandlePlayerSpawned(Player p)
         {
-            if (p == null) { _target = null; return; }
+            if (p == null)
+            {
+                _target = null;
+                return;
+            }
             _target = p.transform;
             SnapToTarget();
         }
 
         private void HandlePlayerDespawned(Player p)
         {
-            if (_target != null && p != null && _target == p.transform) _target = null;
+            if (_target != null && p != null && _target == p.transform)
+                _target = null;
         }
 
         private void Update()
@@ -129,8 +136,10 @@ namespace Jinhyeong_Character
 
         private void LateUpdate()
         {
-            if (_target == null) return;
-            if (_onlyWhenAlive && _target.gameObject.activeInHierarchy == false) return;
+            if (_target == null)
+                return;
+            if (_onlyWhenAlive && _target.gameObject.activeInHierarchy == false)
+                return;
 
             Vector3 pivot = _target.position + _pivotOffset;
             Quaternion orbitRot = Quaternion.Euler(_pitch, _yaw, 0f);
@@ -164,7 +173,8 @@ namespace Jinhyeong_Character
                 }
             }
 
-            if (held == false) return;
+            if (held == false)
+                return;
 
             float dx = Input.GetAxisRaw("Mouse X");
             float dy = Input.GetAxisRaw("Mouse Y");
@@ -177,13 +187,15 @@ namespace Jinhyeong_Character
         private void ReadZoomInput()
         {
             float scroll = Input.GetAxisRaw("Mouse ScrollWheel");
-            if (Mathf.Abs(scroll) < 0.0001f) return;
+            if (Mathf.Abs(scroll) < 0.0001f)
+                return;
             _distance = Mathf.Clamp(_distance - scroll * _zoomSensitivity, _distanceMin, _distanceMax);
         }
 
         private void SnapToTarget()
         {
-            if (_target == null) return;
+            if (_target == null)
+                return;
 
             Vector3 pivot = _target.position + _pivotOffset;
             Quaternion orbitRot = Quaternion.Euler(_pitch, _yaw, 0f);
@@ -194,9 +206,12 @@ namespace Jinhyeong_Character
 
         private void ApplyFovOverride()
         {
-            if (_fovOverride <= 0f) return;
-            if (_gameCamera == null) ResolveChildCameras();
-            if (_gameCamera == null) return;
+            if (_fovOverride <= 0f)
+                return;
+            if (_gameCamera == null)
+                ResolveChildCameras();
+            if (_gameCamera == null)
+                return;
             _gameCamera.fieldOfView = _fovOverride;
         }
 
@@ -209,15 +224,18 @@ namespace Jinhyeong_Character
                 bool looksLikeUI = c.name.IndexOf("UI", System.StringComparison.OrdinalIgnoreCase) >= 0;
                 if (looksLikeUI)
                 {
-                    if (_uiCamera == null) _uiCamera = c;
+                    if (_uiCamera == null)
+                        _uiCamera = c;
                 }
                 else
                 {
-                    if (_gameCamera == null) _gameCamera = c;
+                    if (_gameCamera == null)
+                        _gameCamera = c;
                 }
             }
             // 게임 카메라가 안 잡혔으면 첫 번째 카메라를 폴백
-            if (_gameCamera == null && cams.Length > 0) _gameCamera = cams[0];
+            if (_gameCamera == null && cams.Length > 0)
+                _gameCamera = cams[0];
         }
     }
 }

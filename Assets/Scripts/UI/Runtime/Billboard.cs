@@ -1,5 +1,6 @@
 using UnityEngine;
 using Jinhyeong_Character;
+using Jinhyeong_Common;
 
 namespace Jinhyeong_UI
 {
@@ -13,8 +14,7 @@ namespace Jinhyeong_UI
     }
 
     /// <summary>월드스페이스 오브젝트를 카메라 방향으로 정렬하는 단일 책임 컴포넌트. CameraFollow.GameCamera 정적 참조를 매 LateUpdate에서 조회하므로 인스턴스마다 카메라 세팅할 필요 없음.</summary>
-    [DisallowMultipleComponent]
-    public class Billboard : MonoBehaviour
+    public class Billboard : BaseBehaviour
     {
         [SerializeField] private EBillboardMode _mode = EBillboardMode.MatchCameraRotation;
 
@@ -27,7 +27,8 @@ namespace Jinhyeong_UI
         private void LateUpdate()
         {
             Camera cam = CameraFollow.GameCamera;
-            if (cam == null) return;
+            if (cam == null)
+                return;
 
             if (_mode == EBillboardMode.MatchCameraRotation)
             {
@@ -38,7 +39,8 @@ namespace Jinhyeong_UI
             // YawOnly
             Vector3 toCam = transform.position - cam.transform.position;
             toCam.y = 0f;
-            if (toCam.sqrMagnitude < 1e-6f) return;
+            if (toCam.sqrMagnitude < 1e-6f)
+                return;
             transform.rotation = Quaternion.LookRotation(toCam, Vector3.up);
         }
     }

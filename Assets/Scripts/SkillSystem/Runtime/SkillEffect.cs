@@ -2,11 +2,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using Jinhyeong_GeneratedEnums;
 using Jinhyeong_Managers;
+using Jinhyeong_Common;
 
 namespace Jinhyeong_SkillSystem
 {
     /// <summary>발사된 스킬 GO의 런타임 동작 컴포넌트. 모션(Instant/Linear/Arc/Curve), 히트 디스패치(Single/AoE/Beam/Chain/Death), 디스폰 규칙을 보유.</summary>
-    public class SkillEffect : MonoBehaviour
+    public class SkillEffect : BaseBehaviour
     {
         public enum MotionMode
         {
@@ -33,6 +34,8 @@ namespace Jinhyeong_SkillSystem
         private float _arcDuration;
         private float _arcHeight;
         private float _curveAmplitude;
+
+        private Vector3 _prevPos;
 
         private float _spawnTime;
         private bool _despawning;
@@ -86,6 +89,7 @@ namespace Jinhyeong_SkillSystem
             _mode = mode;
             _spawnTime = Time.time;
             _startPos = transform.position;
+            _prevPos = transform.position;
             _despawning = false;
             _pulseCount = 0;
             _oneShotDone = false;
@@ -95,7 +99,8 @@ namespace Jinhyeong_SkillSystem
 
         private void ApplyHitShapeScale()
         {
-            if (_c == null || _c.HitNode == null) return;
+            if (_c == null || _c.HitNode == null)
+                return;
             float radius = _c.HitNode.GetFloat(ESkillParamKey.Radius, _c.LevelData, 0f);
             if (radius > 0f)
             {
@@ -105,7 +110,8 @@ namespace Jinhyeong_SkillSystem
 
         private void Update()
         {
-            if (_c == null || _despawning) return;
+            if (_c == null || _despawning)
+                return;
 
             switch (_mode)
             {
@@ -113,19 +119,23 @@ namespace Jinhyeong_SkillSystem
                     break;
 
                 case MotionMode.Linear:
-                    if (StepLinear()) return;
+                    if (StepLinear())
+                        return;
                     break;
 
                 case MotionMode.Arc:
-                    if (StepArc(arc: true)) return;
+                    if (StepArc(arc: true))
+                        return;
                     break;
 
                 case MotionMode.Curve:
-                    if (StepArc(arc: false)) return;
+                    if (StepArc(arc: false))
+                        return;
                     break;
             }
 
             ProcessHit(immediate: false, seedTargets: null);
+            _prevPos = transform.position;
             CheckTimedDespawn();
         }
 
@@ -178,7 +188,8 @@ namespace Jinhyeong_SkillSystem
 
         private void ProcessHit(bool immediate, IList<Damageable> seedTargets)
         {
-            if (_c.HitNode == null) return;
+            if (_c.HitNode == null)
+                return;
             switch (_c.HitNode.NodeType)
             {
                 case ESkillNodeType.SingleHit:
@@ -188,10 +199,12 @@ namespace Jinhyeong_SkillSystem
                     ProcessAoE(seedTargets);
                     break;
                 case ESkillNodeType.BeamHit:
-                    if (immediate == false) ProcessBeamTick();
+                    if (immediate == false)
+                        ProcessBeamTick();
                     break;
                 case ESkillNodeType.ChainLightningHit:
-                    if (_oneShotDone == false) ProcessBounce(seedTargets);
+                    if (_oneShotDone == false)
+                        ProcessBounce(seedTargets);
                     break;
                 case ESkillNodeType.DeathChainHit:
                     ProcessExplode(seedTargets);
@@ -208,8 +221,10 @@ namespace Jinhyeong_SkillSystem
                 ? seedTargets[0]
                 : FindNearestEnemy(radius);
 
-            if (d == null || d.IsAlive == false) return;
-            if (_lastHitTime.ContainsKey(d)) return;
+            if (d == null || d.IsAlive == false)
+                return;
+            if (_lastHitTime.ContainsKey(d))
+                return;
 
             DealDamageTo(d, damage);
             _lastHitTime[d] = Time.time;
@@ -227,16 +242,19 @@ namespace Jinhyeong_SkillSystem
             {
                 for (int i = 0; i < seedTargets.Count; i++)
                 {
-                    if (TryDamageOnce(seedTargets[i], damage)) hits++;
-                    if (hits >= maxPerPulse) break;
+                    if (TryDamageOnce(seedTargets[i], damage))
+                        hits++;
+                    if (hits >= maxPerPulse)
+                        break;
                 }
             }
             if (hits < maxPerPulse)
             {
-                GatherEnemiesInRadius(transform.position, radius, _scanBuf);
+                GatherEnemiesInSweep(_prevPos, transform.position, radius, _scanBuf);
                 for (int i = 0; i < _scanBuf.Count && hits < maxPerPulse; i++)
                 {
-                    if (TryDamageOnce(_scanBuf[i], damage)) hits++;
+                    if (TryDamageOnce(_scanBuf[i], damage))
+                        hits++;
                 }
             }
 
@@ -264,20 +282,26 @@ namespace Jinhyeong_SkillSystem
             for (int i = 0; i < all.Count; i++)
             {
                 Damageable d = all[i];
-                if (d == null || d.IsAlive == false) continue;
-                if (d.Team != _enemyTeam) continue;
+                if (d == null || d.IsAlive == false)
+                    continue;
+                if (d.Team != _enemyTeam)
+                    continue;
 
                 Vector3 to = d.transform.position - origin;
                 float along = Vector3.Dot(to, forward);
-                if (along < 0f || along * along > lengthSq) continue;
+                if (along < 0f || along * along > lengthSq)
+                    continue;
                 Vector3 perp = to - forward * along;
-                if (perp.sqrMagnitude > halfWidth * halfWidth) continue;
+                if (perp.sqrMagnitude > halfWidth * halfWidth)
+                    continue;
 
                 if (_lastHitTime.TryGetValue(d, out float lastT))
                 {
-                    if (Time.time - lastT < interval) continue;
+                    if (Time.time - lastT < interval)
+                        continue;
                 }
-                if (CountHitsOn(d) >= maxPerTarget) continue;
+                if (CountHitsOn(d) >= maxPerTarget)
+                    continue;
 
                 DealDamageTo(d, damage);
                 _lastHitTime[d] = Time.time;
@@ -300,7 +324,8 @@ namespace Jinhyeong_SkillSystem
                 ? seedTargets[0]
                 : FindNearestEnemy(jumpRange);
 
-            if (current == null || current.IsAlive == false) return;
+            if (current == null || current.IsAlive == false)
+                return;
 
             DealDamageTo(current, damage);
             _lastHitTime[current] = Time.time;
@@ -308,7 +333,8 @@ namespace Jinhyeong_SkillSystem
             for (int j = 0; j < maxJumps; j++)
             {
                 Damageable next = FindNearestUnchainedEnemy(current.transform.position, jumpRange);
-                if (next == null) break;
+                if (next == null)
+                    break;
                 DealDamageTo(next, damage);
                 _lastHitTime[next] = Time.time;
                 current = next;
@@ -328,8 +354,10 @@ namespace Jinhyeong_SkillSystem
                 ? seedTargets[0]
                 : FindNearestEnemy(radius);
 
-            if (primary == null || primary.IsAlive == false) return;
-            if (_lastHitTime.ContainsKey(primary)) return;
+            if (primary == null || primary.IsAlive == false)
+                return;
+            if (_lastHitTime.ContainsKey(primary))
+                return;
 
             Vector3 dyingPos = primary.transform.position;
             bool died = DealDamageTo(primary, damage);
@@ -341,8 +369,10 @@ namespace Jinhyeong_SkillSystem
                 for (int i = 0; i < _scanBuf.Count; i++)
                 {
                     Damageable d = _scanBuf[i];
-                    if (d == primary) continue;
-                    if (_lastHitTime.ContainsKey(d)) continue;
+                    if (d == primary)
+                        continue;
+                    if (_lastHitTime.ContainsKey(d))
+                        continue;
                     DealDamageTo(d, damage);
                     _lastHitTime[d] = Time.time;
                 }
@@ -360,7 +390,8 @@ namespace Jinhyeong_SkillSystem
         private void CheckHitCountDespawn()
         {
             SkillNodeData ds = _c.DespawnNode;
-            if (ds == null || ds.NodeType != ESkillNodeType.OnHitDespawn) return;
+            if (ds == null || ds.NodeType != ESkillNodeType.OnHitDespawn)
+                return;
             int max = Mathf.Max(1, ds.GetInt(ESkillParamKey.Value, null, 1));
             if (_pulseCount >= max)
             {
@@ -371,7 +402,8 @@ namespace Jinhyeong_SkillSystem
         private void CheckTimedDespawn()
         {
             SkillNodeData ds = _c.DespawnNode;
-            if (ds == null || ds.NodeType != ESkillNodeType.DurationDespawn) return;
+            if (ds == null || ds.NodeType != ESkillNodeType.DurationDespawn)
+                return;
             float duration = ds.GetFloat(ESkillParamKey.Value, null, 1f);
             if (Time.time - _spawnTime >= duration)
             {
@@ -381,7 +413,8 @@ namespace Jinhyeong_SkillSystem
 
         private void Despawn()
         {
-            if (_despawning) return;
+            if (_despawning)
+                return;
             _despawning = true;
 
             if (PoolManager.Instance != null
@@ -398,8 +431,10 @@ namespace Jinhyeong_SkillSystem
 
         private bool TryDamageOnce(Damageable d, float damage)
         {
-            if (d == null || d.IsAlive == false) return false;
-            if (_lastHitTime.ContainsKey(d)) return false;
+            if (d == null || d.IsAlive == false)
+                return false;
+            if (_lastHitTime.ContainsKey(d))
+                return false;
             DealDamageTo(d, damage);
             _lastHitTime[d] = Time.time;
             return true;
@@ -407,7 +442,8 @@ namespace Jinhyeong_SkillSystem
 
         private bool DealDamageTo(Damageable d, float rawDamage)
         {
-            if (d == null || d.IsAlive == false) return false;
+            if (d == null || d.IsAlive == false)
+                return false;
             float scaled = rawDamage * (_caster != null ? _caster.OutgoingDamageMultiplier : 1f);
             bool died = d.TakeDamage(scaled, _caster);
             ApplyDebuffsTo(d);
@@ -416,11 +452,13 @@ namespace Jinhyeong_SkillSystem
 
         private void ApplyDebuffsTo(Damageable target)
         {
-            if (_c == null || _c.DebuffHitNodes == null) return;
+            if (_c == null || _c.DebuffHitNodes == null)
+                return;
             for (int i = 0; i < _c.DebuffHitNodes.Count; i++)
             {
                 int debuffId = _c.DebuffHitNodes[i].GetInt(ESkillParamKey.DebuffId, null, 0);
-                if (debuffId <= 0) continue;
+                if (debuffId <= 0)
+                    continue;
                 SkillDebuffData data = SkillBuffRegistry.GetDebuff(debuffId);
                 if (data == null)
                 {
@@ -445,10 +483,16 @@ namespace Jinhyeong_SkillSystem
             for (int i = 0; i < all.Count; i++)
             {
                 Damageable d = all[i];
-                if (d == null || d.IsAlive == false) continue;
-                if (d.Team != _enemyTeam) continue;
-                float sq = (d.transform.position - transform.position).sqrMagnitude;
-                if (sq <= maxSq && sq < bestSq) { bestSq = sq; best = d; }
+                if (d == null || d.IsAlive == false)
+                    continue;
+                if (d.Team != _enemyTeam)
+                    continue;
+                float sq = SweepPlanarDistSq(_prevPos, transform.position, d.transform.position);
+                if (sq <= maxSq && sq < bestSq)
+                {
+                    bestSq = sq;
+                    best = d;
+                }
             }
             return best;
         }
@@ -462,11 +506,18 @@ namespace Jinhyeong_SkillSystem
             for (int i = 0; i < all.Count; i++)
             {
                 Damageable d = all[i];
-                if (d == null || d.IsAlive == false) continue;
-                if (d.Team != _enemyTeam) continue;
-                if (_lastHitTime.ContainsKey(d)) continue;
-                float sq = (d.transform.position - from).sqrMagnitude;
-                if (sq <= maxSq && sq < bestSq) { bestSq = sq; best = d; }
+                if (d == null || d.IsAlive == false)
+                    continue;
+                if (d.Team != _enemyTeam)
+                    continue;
+                if (_lastHitTime.ContainsKey(d))
+                    continue;
+                float sq = PointPlanarDistSq(from, d.transform.position);
+                if (sq <= maxSq && sq < bestSq)
+                {
+                    bestSq = sq;
+                    best = d;
+                }
             }
             return best;
         }
@@ -479,13 +530,69 @@ namespace Jinhyeong_SkillSystem
             for (int i = 0; i < all.Count; i++)
             {
                 Damageable d = all[i];
-                if (d == null || d.IsAlive == false) continue;
-                if (d.Team != _enemyTeam) continue;
-                if ((d.transform.position - origin).sqrMagnitude <= rSq)
+                if (d == null || d.IsAlive == false)
+                    continue;
+                if (d.Team != _enemyTeam)
+                    continue;
+                if (PointPlanarDistSq(d.transform.position, origin) <= rSq)
                 {
                     outList.Add(d);
                 }
             }
+        }
+
+        private void GatherEnemiesInSweep(Vector3 segStart, Vector3 segEnd, float radius, List<Damageable> outList)
+        {
+            outList.Clear();
+            float rSq = radius * radius;
+            IReadOnlyList<Damageable> all = Damageable.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                Damageable d = all[i];
+                if (d == null || d.IsAlive == false)
+                    continue;
+                if (d.Team != _enemyTeam)
+                    continue;
+                if (SweepPlanarDistSq(segStart, segEnd, d.transform.position) <= rSq)
+                {
+                    outList.Add(d);
+                }
+            }
+        }
+
+        private static float PointPlanarDistSq(Vector3 a, Vector3 b)
+        {
+            float dx = a.x - b.x;
+            float dz = a.z - b.z;
+            return dx * dx + dz * dz;
+        }
+
+        // XZ 평면에서 선분(segStart→segEnd)과 점(p) 사이 최단거리 제곱.
+        // 빠른 발사체가 한 프레임에 적을 통과해도 잡히게 하기 위함. Y 차이는 무시한다(캐릭터/발사체 height 차이로 인한 miss 방지).
+        private static float SweepPlanarDistSq(Vector3 segStart, Vector3 segEnd, Vector3 p)
+        {
+            float ax = segStart.x, az = segStart.z;
+            float bx = segEnd.x,   bz = segEnd.z;
+            float abx = bx - ax,   abz = bz - az;
+            float ab2 = abx * abx + abz * abz;
+            if (ab2 < 1e-6f)
+            {
+                float ddx = p.x - ax;
+                float ddz = p.z - az;
+                return ddx * ddx + ddz * ddz;
+            }
+            float apx = p.x - ax;
+            float apz = p.z - az;
+            float t = (apx * abx + apz * abz) / ab2;
+            if (t < 0f)
+                t = 0f;
+            else if (t > 1f)
+                t = 1f;
+            float cx = ax + abx * t;
+            float cz = az + abz * t;
+            float ex = p.x - cx;
+            float ez = p.z - cz;
+            return ex * ex + ez * ez;
         }
     }
 }

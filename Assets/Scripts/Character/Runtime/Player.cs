@@ -6,9 +6,8 @@ using Jinhyeong_SkillSystem;
 
 namespace Jinhyeong_Character
 {
-    /// <summary>플레이어 루트 컴포넌트. 입력/모터/스킬 등의 하위 컴포넌트를 묶고 CommonConfig 값으로 초기화한 뒤 GameEvents에 스폰을 브로드캐스트.</summary>
-    [DisallowMultipleComponent]
-    public class Player : MonoBehaviour
+    /// <summary>플레이어 루트 컴포넌트. 하위 컴포넌트(SerializeField로 명시 바인딩)를 묶고 CommonConfig 값으로 초기화한 뒤 GameEvents에 스폰을 브로드캐스트.</summary>
+    public class Player : BaseBehaviour
     {
         [Header("Bound Components")]
         [SerializeField] private Damageable _damageable;
@@ -27,76 +26,67 @@ namespace Jinhyeong_Character
 
         private void Awake()
         {
+            // 필수 바인딩 검증 — 하나라도 비면 시끄럽게 죽고(fail-fast) 자동 GetComponent 폴백은 하지 않는다.
+            if (RequireRef(_damageable, nameof(_damageable)) == false)
+                return;
+            if (RequireRef(_skills, nameof(_skills)) == false)
+                return;
+            if (RequireRef(_playable, nameof(_playable)) == false)
+                return;
+            if (RequireRef(_input, nameof(_input)) == false)
+                return;
+            if (RequireRef(_motor, nameof(_motor)) == false)
+                return;
+            if (RequireRef(_facing, nameof(_facing)) == false)
+                return;
+            if (RequireRef(_attack, nameof(_attack)) == false)
+                return;
+            if (RequireRef(_controller, nameof(_controller)) == false)
+                return;
+
             Init();
         }
 
-        private void OnEnable()
-        {
-            if (_spawnedNotified == false)
-            {
-                _spawnedNotified = true;
-                GameEvents.RaisePlayerSpawned(this);
-            }
-        }
-
-        private void OnDisable()
+        protected override void OnEnabled()
         {
             if (_spawnedNotified)
-            {
-                _spawnedNotified = false;
-                GameEvents.RaisePlayerDespawned(this);
-            }
+                return;
+            _spawnedNotified = true;
+            GameEvents.RaisePlayerSpawned(this);
+        }
+
+        protected override void OnDisabled()
+        {
+            if (_spawnedNotified == false)
+                return;
+            _spawnedNotified = false;
+            GameEvents.RaisePlayerDespawned(this);
         }
 
         public void Init()
         {
-            if (_damageable != null)
-            {
-                _damageable.MaxHp = CommonConfig.Player.Hp;
-                _damageable.Hp = CommonConfig.Player.Hp;
-                _damageable.Shield = 0f;
-                _damageable.Stunned = false;
-                _damageable.SpeedMultiplier = 1f;
-                _damageable.IncomingDamageMultiplier = 1f;
-                _damageable.NotifyHealthChanged();
-            }
-            if (_skills != null)
-            {
-                _skills.Stunned = false;
-                _skills.OutgoingDamageMultiplier = 1f;
-                _skills.AttackSpeedMultiplier = 1f;
-            }
-            if (_motor != null)
-            {
-                _motor.MoveSpeed = CommonConfig.Player.MoveSpeed;
-                _motor.SpeedMultiplier = 1f;
-                _motor.MoveAxis = Vector2.zero;
-            }
-            if (_facing != null)
-            {
-                _facing.TurnSpeed = CommonConfig.Player.TurnSpeed;
-            }
-            if (_attack != null)
-            {
-                _attack.Damage = CommonConfig.Player.AttackDamage;
-                _attack.Range = CommonConfig.Player.AttackRange;
-                _attack.HalfAngleDeg = CommonConfig.Player.AttackHalfAngleDeg;
-                _attack.Cooldown = CommonConfig.Player.AttackCooldown;
-            }
-        }
+            _damageable.MaxHp = CommonConfig.Player.Hp;
+            _damageable.Hp = CommonConfig.Player.Hp;
+            _damageable.Shield = 0f;
+            _damageable.Stunned = false;
+            _damageable.SpeedMultiplier = 1f;
+            _damageable.IncomingDamageMultiplier = 1f;
+            _damageable.NotifyHealthChanged();
 
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (_damageable == null) _damageable = GetComponent<Damageable>();
-            if (_skills == null) _skills = GetComponent<SkillObject>();
-            if (_playable == null) _playable = GetComponent<Playable>();
-            if (_input == null) _input = GetComponent<KeyboardInputProvider>();
-            if (_motor == null) _motor = GetComponent<CharacterMotor>();
-            if (_facing == null) _facing = GetComponent<CharacterFacing>();
-            if (_attack == null) _attack = GetComponent<CharacterAttack>();
-            if (_controller == null) _controller = GetComponent<PlayerController>();
+            _skills.Stunned = false;
+            _skills.OutgoingDamageMultiplier = 1f;
+            _skills.AttackSpeedMultiplier = 1f;
+
+            _motor.MoveSpeed = CommonConfig.Player.MoveSpeed;
+            _motor.SpeedMultiplier = 1f;
+            _motor.MoveAxis = Vector2.zero;
+
+            _facing.TurnSpeed = CommonConfig.Player.TurnSpeed;
+
+            _attack.Damage = CommonConfig.Player.AttackDamage;
+            _attack.Range = CommonConfig.Player.AttackRange;
+            _attack.HalfAngleDeg = CommonConfig.Player.AttackHalfAngleDeg;
+            _attack.Cooldown = CommonConfig.Player.AttackCooldown;
         }
-#endif
     }
 }

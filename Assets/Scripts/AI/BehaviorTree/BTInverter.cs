@@ -12,16 +12,19 @@ namespace Jinhyeong_AI.BehaviorTree
 
         public override EBTStatus Tick(float deltaTime)
         {
-            if (_child == null) return EBTStatus.Failure;
+            if (_child == null)
+                return EBTStatus.Failure;
 
             EBTStatus s = _child.Tick(deltaTime);
-            if (s == EBTStatus.Running) return EBTStatus.Running;
+            if (s == EBTStatus.Running)
+                return EBTStatus.Running;
             return s == EBTStatus.Success ? EBTStatus.Failure : EBTStatus.Success;
         }
 
         public override void Reset()
         {
-            if (_child != null) _child.Reset();
+            if (_child != null)
+                _child.Reset();
         }
     }
 }

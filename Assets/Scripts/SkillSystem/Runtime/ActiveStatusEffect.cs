@@ -1,11 +1,11 @@
 using UnityEngine;
 using Jinhyeong_GeneratedEnums;
+using Jinhyeong_Common;
 
 namespace Jinhyeong_SkillSystem
 {
     /// <summary>Buff/Debuff를 대상 GO에 컴포넌트로 부착해 지속시간, 주기 틱, enter/exit 스탯 변경을 자체 관리하는 런타임 상태이상 인스턴스.</summary>
-    [DisallowMultipleComponent]
-    public class ActiveStatusEffect : MonoBehaviour
+    public class ActiveStatusEffect : BaseBehaviour
     {
         public enum Kind { Buff, Debuff }
 
@@ -31,7 +31,8 @@ namespace Jinhyeong_SkillSystem
 
         public static ActiveStatusEffect ApplyBuff(GameObject target, SkillBuffData data, SkillObject source)
         {
-            if (target == null || data == null) return null;
+            if (target == null || data == null)
+                return null;
             ActiveStatusEffect eff = target.AddComponent<ActiveStatusEffect>();
             eff.EffectKind = Kind.Buff;
             eff.EffectId = data.Id;
@@ -47,7 +48,8 @@ namespace Jinhyeong_SkillSystem
 
         public static ActiveStatusEffect ApplyDebuff(GameObject target, SkillDebuffData data, SkillObject source)
         {
-            if (target == null || data == null) return null;
+            if (target == null || data == null)
+                return null;
             ActiveStatusEffect eff = target.AddComponent<ActiveStatusEffect>();
             eff.EffectKind = Kind.Debuff;
             eff.EffectId = data.Id;
@@ -150,13 +152,16 @@ namespace Jinhyeong_SkillSystem
             switch (BuffKind)
             {
                 case EBuffType.DamageBoost:
-                    if (_targetCaster != null) _targetCaster.OutgoingDamageMultiplier += Value0;
+                    if (_targetCaster != null)
+                        _targetCaster.OutgoingDamageMultiplier += Value0;
                     break;
                 case EBuffType.AttackSpeedBoost:
-                    if (_targetCaster != null) _targetCaster.AttackSpeedMultiplier += Value0;
+                    if (_targetCaster != null)
+                        _targetCaster.AttackSpeedMultiplier += Value0;
                     break;
                 case EBuffType.Shield:
-                    if (_targetDamageable != null) _targetDamageable.Shield += Value0;
+                    if (_targetDamageable != null)
+                        _targetDamageable.Shield += Value0;
                     break;
                 case EBuffType.HealOverTime:
                     break;
@@ -168,10 +173,12 @@ namespace Jinhyeong_SkillSystem
             switch (BuffKind)
             {
                 case EBuffType.DamageBoost:
-                    if (_targetCaster != null) _targetCaster.OutgoingDamageMultiplier -= Value0;
+                    if (_targetCaster != null)
+                        _targetCaster.OutgoingDamageMultiplier -= Value0;
                     break;
                 case EBuffType.AttackSpeedBoost:
-                    if (_targetCaster != null) _targetCaster.AttackSpeedMultiplier -= Value0;
+                    if (_targetCaster != null)
+                        _targetCaster.AttackSpeedMultiplier -= Value0;
                     break;
                 case EBuffType.Shield:
                     break;
@@ -185,14 +192,18 @@ namespace Jinhyeong_SkillSystem
             switch (DebuffKind)
             {
                 case EDebuffType.SlowReduce:
-                    if (_targetDamageable != null) _targetDamageable.SpeedMultiplier *= (1f - Value0);
+                    if (_targetDamageable != null)
+                        _targetDamageable.SpeedMultiplier *= (1f - Value0);
                     break;
                 case EDebuffType.DamageReceiveIncrease:
-                    if (_targetDamageable != null) _targetDamageable.IncomingDamageMultiplier += Value0;
+                    if (_targetDamageable != null)
+                        _targetDamageable.IncomingDamageMultiplier += Value0;
                     break;
                 case EDebuffType.Stun:
-                    if (_targetDamageable != null) _targetDamageable.Stunned = true;
-                    if (_targetCaster != null)     _targetCaster.Stunned = true;
+                    if (_targetDamageable != null)
+                        _targetDamageable.Stunned = true;
+                    if (_targetCaster != null)
+                        _targetCaster.Stunned = true;
                     break;
                 case EDebuffType.DamageOverTime:
                     break;
@@ -210,11 +221,14 @@ namespace Jinhyeong_SkillSystem
                     }
                     break;
                 case EDebuffType.DamageReceiveIncrease:
-                    if (_targetDamageable != null) _targetDamageable.IncomingDamageMultiplier -= Value0;
+                    if (_targetDamageable != null)
+                        _targetDamageable.IncomingDamageMultiplier -= Value0;
                     break;
                 case EDebuffType.Stun:
-                    if (_targetDamageable != null) _targetDamageable.Stunned = false;
-                    if (_targetCaster != null)     _targetCaster.Stunned = false;
+                    if (_targetDamageable != null)
+                        _targetDamageable.Stunned = false;
+                    if (_targetCaster != null)
+                        _targetCaster.Stunned = false;
                     break;
                 case EDebuffType.DamageOverTime:
                     break;

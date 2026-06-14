@@ -3,12 +3,12 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using Jinhyeong_Common;
 
 namespace Jinhyeong_Managers
 {
     /// <summary>Addressables 키별 prefab을 비동기로 로드/캐싱하는 싱글톤. PoolManager가 풀 미스 시 여기서 prefab을 꺼내 Instantiate.</summary>
-    [DisallowMultipleComponent]
-    public class AddressableManager : MonoBehaviour
+    public class AddressableManager : BaseBehaviour
     {
         public static AddressableManager Instance { get; private set; }
 
@@ -23,6 +23,16 @@ namespace Jinhyeong_Managers
                 return;
             }
             Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+
+        /// <summary>씬에 _AddressableManager가 배치되지 않은 경우를 위한 자가생성. 반드시 메인 스레드에서 호출.</summary>
+        public static AddressableManager Ensure()
+        {
+            if (Instance != null)
+                return Instance;
+            GameObject go = new GameObject("_AddressableManager");
+            return go.AddComponent<AddressableManager>();
         }
 
         private void OnDestroy()
@@ -44,7 +54,8 @@ namespace Jinhyeong_Managers
             {
                 if (existing.IsValid())
                 {
-                    if (existing.Status == AsyncOperationStatus.Succeeded) return existing.Result;
+                    if (existing.Status == AsyncOperationStatus.Succeeded)
+                        return existing.Result;
                     await existing.ToUniTask();
                     return existing.Status == AsyncOperationStatus.Succeeded ? existing.Result : null;
                 }
@@ -63,20 +74,24 @@ namespace Jinhyeong_Managers
 
         public async UniTask LoadAllAsync(IEnumerable<string> keys)
         {
-            if (keys == null) return;
+            if (keys == null)
+                return;
             var tasks = new List<UniTask<GameObject>>();
             foreach (string key in keys)
             {
-                if (string.IsNullOrEmpty(key) || key == PoolManager.KeyEmpty) continue;
+                if (string.IsNullOrEmpty(key) || key == PoolManager.KeyEmpty)
+                    continue;
                 tasks.Add(LoadAsync(key));
             }
-            if (tasks.Count == 0) return;
+            if (tasks.Count == 0)
+                return;
             await UniTask.WhenAll(tasks);
         }
 
         public GameObject Get(string key)
         {
-            if (string.IsNullOrEmpty(key) || key == PoolManager.KeyEmpty) return null;
+            if (string.IsNullOrEmpty(key) || key == PoolManager.KeyEmpty)
+                return null;
             if (_handles.TryGetValue(key, out AsyncOperationHandle<GameObject> h) && h.IsValid())
             {
                 return h.Status == AsyncOperationStatus.Succeeded ? h.Result : null;
@@ -86,7 +101,8 @@ namespace Jinhyeong_Managers
 
         public bool IsLoaded(string key)
         {
-            if (string.IsNullOrEmpty(key)) return false;
+            if (string.IsNullOrEmpty(key))
+                return false;
             return _handles.TryGetValue(key, out AsyncOperationHandle<GameObject> h)
                    && h.IsValid()
                    && h.Status == AsyncOperationStatus.Succeeded;
@@ -94,10 +110,12 @@ namespace Jinhyeong_Managers
 
         public void Release(string key)
         {
-            if (string.IsNullOrEmpty(key)) return;
+            if (string.IsNullOrEmpty(key))
+                return;
             if (_handles.TryGetValue(key, out AsyncOperationHandle<GameObject> h))
             {
-                if (h.IsValid()) Addressables.Release(h);
+                if (h.IsValid())
+                    Addressables.Release(h);
                 _handles.Remove(key);
             }
         }
@@ -106,7 +124,8 @@ namespace Jinhyeong_Managers
         {
             foreach (AsyncOperationHandle<GameObject> h in _handles.Values)
             {
-                if (h.IsValid()) Addressables.Release(h);
+                if (h.IsValid())
+                    Addressables.Release(h);
             }
             _handles.Clear();
         }

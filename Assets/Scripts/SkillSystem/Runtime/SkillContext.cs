@@ -11,12 +11,16 @@ namespace Jinhyeong_SkillSystem
         public Vector3 Direction = Vector3.right;
         public int Level = 1;
 
+        /// <summary>연계(SpawnSubSkill) 깊이. 무한 연계 루프를 막기 위해 Fire 시 자식으로 +1 전파.</summary>
+        public int Depth = 0;
+
         public readonly List<Damageable> Targets = new List<Damageable>(8);
 
-        public void Reset(SkillObject caster, int level)
+        public void Reset(SkillObject caster, int level, int depth = 0)
         {
             Caster = caster;
             Level = level;
+            Depth = depth;
             OriginPosition = caster != null ? caster.transform.position : Vector3.zero;
             Direction = caster != null ? caster.transform.forward : Vector3.right;
             Targets.Clear();

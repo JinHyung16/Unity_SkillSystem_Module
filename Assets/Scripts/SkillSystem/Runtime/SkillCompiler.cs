@@ -1,7 +1,7 @@
 using Jinhyeong_GeneratedEnums;
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>SkillDefinition의 플랫 노드를 순회해 ESkillNodeType 카테고리별 슬롯에 배치하는 컴파일러. 단일 슬롯은 마지막 노드로 덮어쓰고, 반복 가능한 버프/디버프는 리스트로 누적.</summary>
+    /// <summary>SkillDefinition의 플랫 노드를 순회해 ESkillNodeType 카테고리별 슬롯에 배치하는 컴파일러. 단일 슬롯(타게팅/히트/디스폰/런치)은 마지막 노드로 덮어쓰고, 반복 가능한 버프/디버프/서브스킬은 리스트로 누적. 발동 시점은 노드가 아닌 SkillData.Trigger가 책임진다.</summary>
     public static class SkillCompiler
     {
         public static CompiledSkill Compile(SkillDefinition def, int level)
@@ -13,7 +13,8 @@ namespace Jinhyeong_SkillSystem
                 LevelData = def != null ? def.GetLevel(level) : null,
             };
 
-            if (def == null) return c;
+            if (def == null)
+                return c;
 
             for (int i = 0; i < def.Nodes.Count; i++)
             {
@@ -26,12 +27,6 @@ namespace Jinhyeong_SkillSystem
         {
             switch (n.NodeType)
             {
-                case ESkillNodeType.OnTickTrigger:
-                case ESkillNodeType.OnAttackTrigger:
-                case ESkillNodeType.OnOreBreakTrigger:
-                    c.TriggerNode = n;
-                    return;
-
                 case ESkillNodeType.SelfTargeting:
                 case ESkillNodeType.AreaNearTargeting:
                 case ESkillNodeType.AreaFarTargeting:
@@ -52,8 +47,6 @@ namespace Jinhyeong_SkillSystem
 
                 case ESkillNodeType.DurationDespawn:
                 case ESkillNodeType.OnHitDespawn:
-                case ESkillNodeType.OnBounceLimitDespawn:
-                case ESkillNodeType.OnWallHitDespawn:
                     c.DespawnNode = n;
                     return;
 
@@ -70,6 +63,10 @@ namespace Jinhyeong_SkillSystem
 
                 case ESkillNodeType.ApplyDebuffOnHit:
                     c.DebuffHitNodes.Add(n);
+                    return;
+
+                case ESkillNodeType.SpawnSubSkill:
+                    c.SubSkillNodes.Add(n);
                     return;
             }
         }

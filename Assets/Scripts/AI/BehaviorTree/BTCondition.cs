@@ -15,7 +15,8 @@ namespace Jinhyeong_AI.BehaviorTree
 
         public override EBTStatus Tick(float deltaTime)
         {
-            if (_predicate == null) return EBTStatus.Failure;
+            if (_predicate == null)
+                return EBTStatus.Failure;
             return _predicate() ? EBTStatus.Success : EBTStatus.Failure;
         }
     }

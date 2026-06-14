@@ -15,10 +15,10 @@ MonoBehaviour:
   Entries:
   - SkillId: 1001
     Level: 1
-    SlotKey: 113
+    SlotKey: 0
   - SkillId: 1002
     Level: 1
-    SlotKey: 101
+    SlotKey: 0
   - SkillId: 1003
     Level: 1
-    SlotKey: 114
+    SlotKey: 0

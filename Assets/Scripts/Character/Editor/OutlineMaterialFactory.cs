@@ -70,13 +70,16 @@ namespace Jinhyeong_Character.Editor
 
         private static void SetKeyword(Material mat, string keyword, bool enabled)
         {
-            if (enabled) mat.EnableKeyword(keyword);
-            else         mat.DisableKeyword(keyword);
+            if (enabled)
+                mat.EnableKeyword(keyword);
+            else
+                mat.DisableKeyword(keyword);
         }
 
         private static void EnsureFolder(string assetPath)
         {
-            if (AssetDatabase.IsValidFolder(assetPath)) return;
+            if (AssetDatabase.IsValidFolder(assetPath))
+                return;
             string parent = Path.GetDirectoryName(assetPath).Replace('\\', '/');
             string leaf = Path.GetFileName(assetPath);
             if (AssetDatabase.IsValidFolder(parent) == false)

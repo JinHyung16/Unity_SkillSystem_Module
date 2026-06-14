@@ -10,7 +10,8 @@ namespace Jinhyeong_Managers
 
         public GameObject Pool_Skill_Get(string key = KeyEmpty)
         {
-            if (string.IsNullOrEmpty(key)) key = KeyEmpty;
+            if (string.IsNullOrEmpty(key))
+                key = KeyEmpty;
 
             if (_skillPool.TryGetValue(key, out Queue<GameObject> queue) && queue.Count > 0)
             {
@@ -22,17 +23,21 @@ namespace Jinhyeong_Managers
                 }
             }
 
-            if (key == KeyEmpty) return null;
+            if (key == KeyEmpty)
+                return null;
             return InstantiateFromAddressable(key);
         }
 
         public void Pool_Skill_Return(string key, GameObject obj)
         {
-            if (obj == null) return;
-            if (string.IsNullOrEmpty(key)) key = KeyEmpty;
+            if (obj == null)
+                return;
+            if (string.IsNullOrEmpty(key))
+                key = KeyEmpty;
 
             obj.SetActive(false);
-            if (PoolRoot != null) obj.transform.SetParent(PoolRoot, false);
+            if (PoolRoot != null)
+                obj.transform.SetParent(PoolRoot, false);
 
             if (_skillPool.TryGetValue(key, out Queue<GameObject> queue) == false)
             {
@@ -49,7 +54,8 @@ namespace Jinhyeong_Managers
                 while (queue.Count > 0)
                 {
                     GameObject obj = queue.Dequeue();
-                    if (obj != null) Destroy(obj);
+                    if (obj != null)
+                        Destroy(obj);
                 }
             }
             _skillPool.Clear();

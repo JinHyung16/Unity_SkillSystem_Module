@@ -17,13 +17,15 @@ namespace Jinhyeong_AI.BehaviorTree
 
         public override EBTStatus Tick(float deltaTime)
         {
-            if (_action == null) return EBTStatus.Failure;
+            if (_action == null)
+                return EBTStatus.Failure;
             return _action(deltaTime);
         }
 
         public override void Reset()
         {
-            if (_onReset != null) _onReset.Invoke();
+            if (_onReset != null)
+                _onReset.Invoke();
         }
     }
 }

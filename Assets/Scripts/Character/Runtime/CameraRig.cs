@@ -1,10 +1,10 @@
 using UnityEngine;
+using Jinhyeong_Common;
 
 namespace Jinhyeong_Character
 {
-    /// <summary>Player 하위에 붙여 게임/UI 카메라 참조를 들고 있는 홀더. 카메라 연출의 진입점.</summary>
-    [DisallowMultipleComponent]
-    public class CameraRig : MonoBehaviour
+    /// <summary>게임/UI 카메라 참조를 들고 있는 홀더. SerializeField로 명시 바인딩(자동 탐색 폴백 없음).</summary>
+    public class CameraRig : BaseBehaviour
     {
         [Header("Bound Cameras")]
         [SerializeField] private Camera _gameCamera;
@@ -12,27 +12,5 @@ namespace Jinhyeong_Character
 
         public Camera GameCamera { get { return _gameCamera; } }
         public Camera UICamera { get { return _uiCamera; } }
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (_gameCamera != null && _uiCamera != null) return;
-
-            Camera[] cams = GetComponentsInChildren<Camera>(true);
-            for (int i = 0; i < cams.Length; i++)
-            {
-                Camera c = cams[i];
-                bool looksLikeUI = c.name.IndexOf("UI", System.StringComparison.OrdinalIgnoreCase) >= 0;
-                if (looksLikeUI)
-                {
-                    if (_uiCamera == null) _uiCamera = c;
-                }
-                else
-                {
-                    if (_gameCamera == null) _gameCamera = c;
-                }
-            }
-        }
-#endif
     }
 }

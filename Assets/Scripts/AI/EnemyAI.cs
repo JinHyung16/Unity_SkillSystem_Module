@@ -8,13 +8,12 @@ using Jinhyeong_SkillSystem;
 namespace Jinhyeong_AI
 {
     /// <summary>적 캐릭터의 BT 기반 의사결정. Flee/Attack/Chase/Patrol Selector 트리를 구성하고 타겟 인지, 사격, 순찰을 처리한다.</summary>
-    [DisallowMultipleComponent]
     [RequireComponent(typeof(Damageable))]
     [RequireComponent(typeof(SkillObject))]
     [RequireComponent(typeof(CharacterMotor))]
     [RequireComponent(typeof(CharacterFacing))]
     [RequireComponent(typeof(BehaviorTreeRunner))]
-    public class EnemyAI : MonoBehaviour
+    public class EnemyAI : BaseBehaviour
     {
         private Damageable _self;
         private SkillObject _skills;
@@ -56,7 +55,8 @@ namespace Jinhyeong_AI
             _hasPatrolTarget = false;
             _patrolWaitTimer = 0f;
             _spawnPosition = transform.position;
-            if (_runner != null) _runner.SetRoot(BuildTree());
+            if (_runner != null)
+                _runner.SetRoot(BuildTree());
         }
 
         private BTNode BuildTree()
@@ -101,11 +101,13 @@ namespace Jinhyeong_AI
 
             if (_isAware == false)
             {
-                if (distSq <= detSq) _isAware = true;
+                if (distSq <= detSq)
+                    _isAware = true;
             }
             else
             {
-                if (distSq > loseSq) _isAware = false;
+                if (distSq > loseSq)
+                    _isAware = false;
             }
         }
 
@@ -123,7 +125,8 @@ namespace Jinhyeong_AI
 
         private bool InAttackRange()
         {
-            if (_target == null) return false;
+            if (_target == null)
+                return false;
             float distSq = (_target.transform.position - transform.position).sqrMagnitude;
             return distSq <= CommonConfig.Enemy.AIAttackRange * CommonConfig.Enemy.AIAttackRange;
         }
@@ -135,11 +138,13 @@ namespace Jinhyeong_AI
 
         private EBTStatus TickFlee(float dt)
         {
-            if (_target == null) return EBTStatus.Failure;
+            if (_target == null)
+                return EBTStatus.Failure;
 
             Vector3 toMe = transform.position - _target.transform.position;
             toMe.y = 0f;
-            if (toMe.sqrMagnitude < 0.0001f) toMe = Random.insideUnitSphere;
+            if (toMe.sqrMagnitude < 0.0001f)
+                toMe = Random.insideUnitSphere;
 
             Vector3 dir = toMe.normalized;
             _motor.SpeedMultiplier = CommonConfig.Enemy.FleeSpeedMultiplier;
@@ -150,7 +155,8 @@ namespace Jinhyeong_AI
 
         private EBTStatus TickAttack(float dt)
         {
-            if (_target == null) return EBTStatus.Failure;
+            if (_target == null)
+                return EBTStatus.Failure;
 
             _motor.SpeedMultiplier = CommonConfig.Enemy.ChaseSpeedMultiplier;
             _motor.MoveAxis = Vector2.zero;
@@ -168,7 +174,8 @@ namespace Jinhyeong_AI
 
         private Vector3 AttackDirection()
         {
-            if (_target == null) return _facing.ForwardPlanar;
+            if (_target == null)
+                return _facing.ForwardPlanar;
             Vector3 to = _target.transform.position - transform.position;
             to.y = 0f;
             return to.sqrMagnitude > 0.0001f ? to.normalized : _facing.ForwardPlanar;
@@ -191,12 +198,14 @@ namespace Jinhyeong_AI
         private void TryFireMelee(Vector3 dir)
         {
             CharacterAttack melee = GetComponent<CharacterAttack>();
-            if (melee != null) melee.TryFire(dir);
+            if (melee != null)
+                melee.TryFire(dir);
         }
 
         private EBTStatus TickChase(float dt)
         {
-            if (_target == null) return EBTStatus.Failure;
+            if (_target == null)
+                return EBTStatus.Failure;
 
             Vector3 to = _target.transform.position - transform.position;
             to.y = 0f;
@@ -259,7 +268,8 @@ namespace Jinhyeong_AI
         private void FaceDir(Vector3 worldDir)
         {
             worldDir.y = 0f;
-            if (worldDir.sqrMagnitude < 0.0001f) return;
+            if (worldDir.sqrMagnitude < 0.0001f)
+                return;
             _facing.ForwardWorld = worldDir;
         }
 
@@ -273,7 +283,8 @@ namespace Jinhyeong_AI
                 Vector3 to = candidate - transform.position;
                 to.y = 0f;
                 float dist = to.magnitude;
-                if (dist < 0.2f) continue;
+                if (dist < 0.2f)
+                    continue;
 
                 Vector3 rayOrigin = transform.position + Vector3.up * Mathf.Max(0.1f, CommonConfig.Enemy.AIRayHeight);
                 Vector3 rayDir = to / dist;
@@ -300,7 +311,8 @@ namespace Jinhyeong_AI
             for (int i = 0; i < _scanBuffer.Count; i++)
             {
                 Damageable d = _scanBuffer[i];
-                if (d == null || d == _self) continue;
+                if (d == null || d == _self)
+                    continue;
                 float sq = (d.transform.position - transform.position).sqrMagnitude;
                 if (sq < bestSq)
                 {

@@ -14,13 +14,16 @@ namespace Jinhyeong_Managers
         public static void RaisePlayerSpawned(Player p)
         {
             CurrentPlayer = p;
-            if (OnPlayerSpawned != null) OnPlayerSpawned.Invoke(p);
+            if (OnPlayerSpawned != null)
+                OnPlayerSpawned.Invoke(p);
         }
 
         public static void RaisePlayerDespawned(Player p)
         {
-            if (CurrentPlayer == p) CurrentPlayer = null;
-            if (OnPlayerDespawned != null) OnPlayerDespawned.Invoke(p);
+            if (CurrentPlayer == p)
+                CurrentPlayer = null;
+            if (OnPlayerDespawned != null)
+                OnPlayerDespawned.Invoke(p);
         }
 
         public static void ClearAll()

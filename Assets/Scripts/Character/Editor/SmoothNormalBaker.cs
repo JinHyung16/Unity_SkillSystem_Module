@@ -59,7 +59,8 @@ namespace Jinhyeong_Character.Editor
 
         public static Mesh BakeMesh(Mesh source, float epsilon = DefaultEpsilon)
         {
-            if (source == null) return null;
+            if (source == null)
+                return null;
 
             Vector3[] vertices = source.vertices;
             Vector3[] normals = source.normals;
@@ -125,9 +126,11 @@ namespace Jinhyeong_Character.Editor
 
         private static void BakeAndSaveAsset(Mesh source)
         {
-            if (source == null) return;
+            if (source == null)
+                return;
             Mesh baked = BakeMesh(source);
-            if (baked == null) return;
+            if (baked == null)
+                return;
 
             string sourcePath = AssetDatabase.GetAssetPath(source);
             string folder;
@@ -138,7 +141,8 @@ namespace Jinhyeong_Character.Editor
             else
             {
                 folder = Path.GetDirectoryName(sourcePath).Replace('\\', '/');
-                if (string.IsNullOrEmpty(folder)) folder = "Assets";
+                if (string.IsNullOrEmpty(folder))
+                    folder = "Assets";
             }
 
             string targetPath = AssetDatabase.GenerateUniqueAssetPath($"{folder}/{baked.name}.asset");
