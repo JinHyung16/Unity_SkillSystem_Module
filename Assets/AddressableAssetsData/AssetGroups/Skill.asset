@@ -15,8 +15,23 @@ MonoBehaviour:
   m_GroupName: Skill
   m_GUID: ae7d3d8bfe3f1f2499d5f7345e9d5e56
   m_SerializeEntries:
+  - m_GUID: 2abf0864efa2d7f4e9cb99e41badb333
+    m_Address: vfx_cleave
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4df5066fdbb66c944ae752ee32ce8578
     m_Address: vfx_bolt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4e44ea85fdc8f1645883d67b4aec92b3
+    m_Address: vfx_chain_lightning
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 550f1c3fd307cc547965426b7581aae9
+    m_Address: vfx_orb
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -27,6 +42,21 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8a084704a9fecb24289c59d8ff4befaf
     m_Address: vfx_explosion_small
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ada46829769ac4845bf6073ddd0e7433
+    m_Address: vfx_bomb
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b936b16511ce74f438a7e44adb31c216
+    m_Address: vfx_lance
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: baf3c518abd72d7439ee97ee3024c1d8
+    m_Address: vfx_meteor
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

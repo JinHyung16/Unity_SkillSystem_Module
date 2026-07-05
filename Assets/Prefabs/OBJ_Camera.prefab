@@ -73,7 +73,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 23
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -109,7 +109,8 @@ MonoBehaviour:
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
-  m_Cameras: []
+  m_Cameras:
+  - {fileID: 5256606462890322227}
   m_RendererIndex: -1
   m_VolumeLayerMask:
     serializedVersion: 2
@@ -154,34 +155,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1100000000000000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4780824322048570168}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c4f0110caab14ae44a7de643016fcbde, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Jinhyeong_Character.CameraFollow
-  _pivotOffset: {x: 0, y: 1.2, z: 0}
-  _smoothTime: 0.08
-  _onlyWhenAlive: 1
-  _initialYaw: 0
-  _initialPitch: 25
-  _initialDistance: 8
-  _pitchMin: 5
-  _pitchMax: 75
-  _distanceMin: 3
-  _distanceMax: 16
-  _yawSensitivity: 4
-  _pitchSensitivity: 3
-  _zoomSensitivity: 15
-  _orbitMouseButton: 1
-  _lockCursorWhileDragging: 1
-  _fovOverride: 55
 --- !u!4 &8127116050325011194
 Transform:
   m_ObjectHideFlags: 0
@@ -199,6 +172,34 @@ Transform:
   - {fileID: 2370592528234641453}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1100000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4780824322048570168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4f0110caab14ae44a7de643016fcbde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Jinhyeong_Character.CameraFollow
+  _pivotOffset: {x: 0, y: 1.2, z: 0}
+  _smoothTime: 0.08
+  _onlyWhenAlive: 1
+  _initialYaw: 0
+  _initialPitch: 25
+  _initialDistance: 8
+  _pitchMin: 5
+  _pitchMax: 75
+  _distanceMin: 3
+  _distanceMax: 16
+  _yawSensitivity: 4
+  _pitchSensitivity: 3
+  _zoomSensitivity: 15
+  _orbitMouseButton: 1
+  _lockCursorWhileDragging: 1
+  _fovOverride: 55
 --- !u!1 &7238301477788059010
 GameObject:
   m_ObjectHideFlags: 0
@@ -209,7 +210,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2370592528234641453}
   - component: {fileID: 5256606462890322227}
-  - component: {fileID: 2316480448797933832}
   - component: {fileID: 3936907633420616564}
   m_Layer: 0
   m_Name: UICamera
@@ -284,14 +284,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &2316480448797933832
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7238301477788059010}
-  m_Enabled: 1
 --- !u!114 &3936907633420616564
 MonoBehaviour:
   m_ObjectHideFlags: 0
