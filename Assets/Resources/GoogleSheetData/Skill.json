@@ -5,16 +5,14 @@
         "name",
         "desc",
         "max_level",
-        "trigger",
-        "category"
+        "visual_path"
     ],
     "Types": [
         "int",
         "string",
         "string",
         "int",
-        "ESkillTriggerType",
-        "ESkillCategory"
+        "string"
     ],
     "Rows": [
         {
@@ -23,8 +21,7 @@
                 "Chain Strike",
                 "OnAttack 시 가장 가까운 적에게 폭발",
                 "5",
-                "OnAttack",
-                "Area"
+                ""
             ]
         },
         {
@@ -33,8 +30,7 @@
                 "Periodic Strike",
                 "5초마다 화면 내 랜덤 적 1명 타격",
                 "5",
-                "OnTick",
-                "Area"
+                ""
             ]
         },
         {
@@ -43,8 +39,70 @@
                 "Split Bolt",
                 "OnAttack 시 가장 가까운 적 방향으로 직선 발사",
                 "5",
-                "OnAttack",
-                "Projectile"
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "1004",
+                "Flame Chain",
+                "OnAttack 시 가장 가까운 적을 사슬 번개로 연쇄 타격 + 화상",
+                "5",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "1005",
+                "Meteor",
+                "5초마다 가장 먼 적에게 운석 낙하, 범위 피해 + 기절",
+                "5",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "1006",
+                "Piercing Lance",
+                "OnAttack 시 전방 관통 직선 창",
+                "5",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "1007",
+                "Battle Trance",
+                "주기적으로 자신에게 공격력·공속 버프",
+                "5",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "1008",
+                "Cleave",
+                "OnAttack 시 전방 부채꼴 범위를 베어 다수 타격 + 표식",
+                "5",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "1009",
+                "Death Bomb",
+                "OnAttack 시 가장 가까운 적 타격, 처치 시 폭발 연쇄",
+                "5",
+                ""
+            ]
+        },
+        {
+            "Values": [
+                "1010",
+                "Homing Orb",
+                "주기적으로 랜덤 적에게 곡선 유도 구체, 감속",
+                "5",
+                ""
             ]
         }
     ]
