@@ -4,7 +4,7 @@ using Jinhyeong_SkillSystem;
 
 namespace Jinhyeong_UI
 {
-    /// <summary>Damageable의 상태 변화를 자식 UISlice(HP/Shield)에 전달하는 단순 어댑터. UI 구조는 prefab이 책임지고 SerializeField로 명시 바인딩한다(자동 GetComponent 폴백 없음).</summary>
+
     public class WorldHpBar : BaseBehaviour
     {
         [SerializeField] private Damageable _target;

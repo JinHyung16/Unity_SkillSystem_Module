@@ -6,7 +6,7 @@ using Jinhyeong_GeneratedEnums;
 
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>Buff/Debuff 정의를 id로 캐싱하는 메모리 저장소. DataManager에서 SkillBuff/SkillDebuff 테이블을 읽어 EBuffType/EDebuffType 파싱과 함께 적재.</summary>
+
     public static class SkillBuffRegistry
     {
         public const string TableBuff   = "SkillBuff";

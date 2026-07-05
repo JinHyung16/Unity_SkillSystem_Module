@@ -1,78 +1,79 @@
 using UnityEngine;
 using Jinhyeong_GeneratedEnums;
 using Jinhyeong_Managers;
+using Jinhyeong_Common;
 
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>Launch 노드를 읽어 Instant/Linear/Arc/Curve 모션 형태로 SkillEffect GO를 스폰. Visual 키로 풀 조회, 미스 시 primitive 폴백.</summary>
+
     public static class LaunchExecutor
     {
-        public static void Execute(CompiledSkill c, SkillContext ctx)
+
+        public static bool Execute(SkillNodeData launchNode, SkillContext ctx)
         {
-            if (c == null || c.LaunchNode == null)
-                return;
+            if (launchNode == null)
+                return false;
 
-            switch (c.LaunchNode.NodeType)
+            switch (launchNode.NodeType)
             {
-                case ESkillNodeType.InstantLaunch:
-                    LaunchInstant(c, ctx);
-                    return;
+                case ESkillNodeType.LaunchInstant:
+                    return LaunchInstant(launchNode, ctx);
 
-                case ESkillNodeType.StraightLaunch:
-                    LaunchLinear(c, ctx);
-                    return;
+                case ESkillNodeType.LaunchStraight:
+                    LaunchLinear(launchNode, ctx);
+                    return true;
 
-                case ESkillNodeType.ParabolicLaunch:
-                    LaunchArc(c, ctx);
-                    return;
+                case ESkillNodeType.LaunchArc:
+                    LaunchArc(launchNode, ctx);
+                    return true;
 
-                case ESkillNodeType.CurveLaunch:
-                    LaunchCurve(c, ctx);
-                    return;
+                case ESkillNodeType.LaunchCurve:
+                    LaunchCurve(launchNode, ctx);
+                    return true;
             }
+            return false;
         }
 
-        private static void LaunchInstant(CompiledSkill c, SkillContext ctx)
+        private static bool LaunchInstant(SkillNodeData launchNode, SkillContext ctx)
         {
             if (ctx.Targets.Count == 0)
-            {
-                return;
-            }
-            Vector3 spawnPos = ctx.Targets[0].transform.position;
+                return false;
+            Vector3 spawnPos = TargetPos(ctx.Targets[0]);
 
-            string visual = c.LaunchNode.GetString(ESkillParamKey.Visual);
+            string visual = launchNode.GetString(ESkillParamKey.Visual);
             (GameObject go, string key) = SpawnVisual(visual, spawnPos, Quaternion.identity, fallbackTint: new Color(1f, 0.4f, 0.2f));
 
             SkillEffect fx = EnsureSkillEffect(go);
             fx.PoolKey = key;
-            fx.InitInstant(c, ctx);
+            fx.InitInstant(ctx);
             fx.TryImmediateHit(ctx.Targets);
+            return true;
         }
 
-        private static void LaunchLinear(CompiledSkill c, SkillContext ctx)
+        private static void LaunchLinear(SkillNodeData launchNode, SkillContext ctx)
         {
             Vector3 origin = OriginPos(ctx);
             Vector3 dir = ResolveDirection(ctx);
             Quaternion rot = Quaternion.LookRotation(dir);
 
-            string visual = c.LaunchNode.GetString(ESkillParamKey.Visual);
-            float speed = c.LaunchNode.GetFloat(ESkillParamKey.Speed, c.LevelData, 5f);
-            float maxDist = c.LaunchNode.GetFloat(ESkillParamKey.MaxDistance, c.LevelData, 10f);
+            string visual = launchNode.GetString(ESkillParamKey.Visual);
+            float speed = launchNode.GetFloat(ESkillParamKey.Speed, ctx.LevelData, 5f);
+            float maxDist = launchNode.GetFloat(ESkillParamKey.MaxDistance, ctx.LevelData, 10f);
 
             (GameObject go, string key) = SpawnVisual(visual, origin, rot, fallbackTint: new Color(0.3f, 0.7f, 1f));
             SkillEffect fx = EnsureSkillEffect(go);
             fx.PoolKey = key;
-            fx.InitLinear(c, ctx, dir, speed, maxDist);
+            fx.InitLinear(ctx, dir, speed, maxDist);
         }
 
-        private static void LaunchArc(CompiledSkill c, SkillContext ctx)
+        private static void LaunchArc(SkillNodeData launchNode, SkillContext ctx)
         {
             Vector3 origin = OriginPos(ctx);
-            Vector3 endPos = ctx.Targets.Count > 0 ? ctx.Targets[0].transform.position : origin + ResolveDirection(ctx) * 5f;
+            Vector3 endPos = ctx.Targets.Count > 0 ? TargetPos(ctx.Targets[0]) : origin + ResolveDirection(ctx) * 5f;
 
-            string visual = c.LaunchNode.GetString(ESkillParamKey.Visual);
-            float speed = c.LaunchNode.GetFloat(ESkillParamKey.Speed, c.LevelData, 5f);
-            float arcHeight = c.LaunchNode.GetFloat(ESkillParamKey.ArcHeight, c.LevelData, 2f);
+            string visual = launchNode.GetString(ESkillParamKey.Visual);
+            float speed = launchNode.GetFloat(ESkillParamKey.Speed, ctx.LevelData, 5f);
+            float arcHeight = launchNode.GetFloat(ESkillParamKey.ArcHeight, ctx.LevelData, 2f);
 
             Vector3 toEnd = endPos - origin;
             Quaternion rot = toEnd.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(toEnd.normalized) : Quaternion.identity;
@@ -80,17 +81,17 @@ namespace Jinhyeong_SkillSystem
             (GameObject go, string key) = SpawnVisual(visual, origin, rot, fallbackTint: new Color(1f, 0.7f, 0.2f));
             SkillEffect fx = EnsureSkillEffect(go);
             fx.PoolKey = key;
-            fx.InitArc(c, ctx, origin, endPos, speed, arcHeight);
+            fx.InitArc(ctx, origin, endPos, speed, arcHeight);
         }
 
-        private static void LaunchCurve(CompiledSkill c, SkillContext ctx)
+        private static void LaunchCurve(SkillNodeData launchNode, SkillContext ctx)
         {
             Vector3 origin = OriginPos(ctx);
-            Vector3 endPos = ctx.Targets.Count > 0 ? ctx.Targets[0].transform.position : origin + ResolveDirection(ctx) * 5f;
+            Vector3 endPos = ctx.Targets.Count > 0 ? TargetPos(ctx.Targets[0]) : origin + ResolveDirection(ctx) * 5f;
 
-            string visual = c.LaunchNode.GetString(ESkillParamKey.Visual);
-            float speed = c.LaunchNode.GetFloat(ESkillParamKey.Speed, c.LevelData, 5f);
-            float wobbleAmplitude = c.LaunchNode.GetFloat(ESkillParamKey.ArcHeight, c.LevelData, 1f);
+            string visual = launchNode.GetString(ESkillParamKey.Visual);
+            float speed = launchNode.GetFloat(ESkillParamKey.Speed, ctx.LevelData, 5f);
+            float wobbleAmplitude = launchNode.GetFloat(ESkillParamKey.ArcHeight, ctx.LevelData, 1f);
 
             Vector3 toEnd = endPos - origin;
             Quaternion rot = toEnd.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(toEnd.normalized) : Quaternion.identity;
@@ -98,20 +99,25 @@ namespace Jinhyeong_SkillSystem
             (GameObject go, string key) = SpawnVisual(visual, origin, rot, fallbackTint: new Color(0.7f, 0.4f, 1f));
             SkillEffect fx = EnsureSkillEffect(go);
             fx.PoolKey = key;
-            fx.InitCurve(c, ctx, origin, endPos, speed, wobbleAmplitude);
+            fx.InitCurve(ctx, origin, endPos, speed, wobbleAmplitude);
         }
 
         private static Vector3 OriginPos(SkillContext ctx)
         {
-            return ctx.Caster != null ? ctx.Caster.transform.position : ctx.OriginPosition;
+            if (ctx.Caster != null)
+                return ctx.Caster.MuzzlePosition;
+            return ctx.OriginPosition + Vector3.up * CommonConfig.Skill.MuzzleHeight;
+        }
+
+        private static Vector3 TargetPos(Damageable d)
+        {
+            return d.transform.position + Vector3.up * CommonConfig.Skill.MuzzleHeight;
         }
 
         private static Vector3 ResolveDirection(SkillContext ctx)
         {
             if (ctx.Direction.sqrMagnitude > 0.0001f)
-            {
                 return ctx.Direction.normalized;
-            }
             if (ctx.Targets.Count > 0 && ctx.Caster != null)
             {
                 Vector3 d = ctx.Targets[0].transform.position - ctx.Caster.transform.position;
@@ -157,7 +163,7 @@ namespace Jinhyeong_SkillSystem
             }
             go.transform.position = pos;
             go.transform.rotation = rot;
-            go.transform.localScale = Vector3.one * 0.5f;
+            go.transform.localScale = Vector3.one * 1.2f;
             return (go, PoolManager.KeyEmpty);
         }
     }

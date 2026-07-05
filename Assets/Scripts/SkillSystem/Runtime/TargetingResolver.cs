@@ -4,58 +4,49 @@ using Jinhyeong_GeneratedEnums;
 
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>CompiledSkill의 Targeting 노드 종류에 따라 적군을 탐색해 ctx.Targets/Direction을 채우는 정적 리졸버. Self/AreaNear/Far/Random/ScreenAll/NearestDir/Ray를 지원.</summary>
+
     public static class TargetingResolver
     {
         private static readonly List<Damageable> _scratch = new List<Damageable>(64);
         private static readonly List<Damageable> _candidates = new List<Damageable>(64);
 
-        public static void Resolve(CompiledSkill c, SkillContext ctx)
+        public static void Resolve(SkillNodeData node, SkillLevelData level, SkillContext ctx)
         {
             ctx.Targets.Clear();
-            if (c == null || c.TargetingNode == null)
-            {
+            if (node == null)
                 return;
-            }
 
-            SkillNodeData node = c.TargetingNode;
             ESkillTeam enemyTeam = SkillTeamUtil.Opposite(ctx.Caster != null ? ctx.Caster.Team : ESkillTeam.Friend);
-            float range = node.GetFloat(ESkillParamKey.Range, c.LevelData, 5f);
+            float range = node.GetFloat(ESkillParamKey.Range, level, 5f);
             float rangeSq = range * range;
 
             switch (node.NodeType)
             {
-                case ESkillNodeType.SelfTargeting:
+                case ESkillNodeType.TargetSelf:
                 {
                     Damageable self = ctx.Caster != null ? ctx.Caster.GetComponent<Damageable>() : null;
                     if (self != null)
-                    {
                         ctx.Targets.Add(self);
-                    }
                     return;
                 }
 
-                case ESkillNodeType.AreaNearTargeting:
+                case ESkillNodeType.TargetNearest:
                 {
                     Damageable best = FindNearest(ctx.OriginPosition, enemyTeam, rangeSq, out _);
                     if (best != null)
-                    {
                         ctx.Targets.Add(best);
-                    }
                     return;
                 }
 
-                case ESkillNodeType.AreaFarTargeting:
+                case ESkillNodeType.TargetFarthest:
                 {
                     Damageable best = FindFarthest(ctx.OriginPosition, enemyTeam, rangeSq);
                     if (best != null)
-                    {
                         ctx.Targets.Add(best);
-                    }
                     return;
                 }
 
-                case ESkillNodeType.AreaRandomTargeting:
+                case ESkillNodeType.TargetRandom:
                 {
                     int max = node.GetInt(ESkillParamKey.MaxPerTarget, null, 1);
                     GatherInRange(ctx.OriginPosition, enemyTeam, rangeSq, _candidates);
@@ -68,7 +59,7 @@ namespace Jinhyeong_SkillSystem
                     return;
                 }
 
-                case ESkillNodeType.ScreenAllTargeting:
+                case ESkillNodeType.TargetAll:
                 {
                     int max = node.GetInt(ESkillParamKey.MaxPerTarget, null, int.MaxValue);
                     Damageable.GetAllOfTeam(enemyTeam, _candidates);
@@ -79,24 +70,22 @@ namespace Jinhyeong_SkillSystem
                     return;
                 }
 
-                case ESkillNodeType.NearestDirectionTargeting:
+                case ESkillNodeType.TargetNearestForward:
                 {
                     Damageable best = FindNearest(ctx.OriginPosition, enemyTeam, rangeSq, out _);
                     if (best != null)
                     {
                         Vector3 d = best.transform.position - ctx.OriginPosition;
                         if (d.sqrMagnitude > 0.0001f)
-                        {
                             ctx.Direction = d.normalized;
-                        }
                         ctx.Targets.Add(best);
                     }
                     return;
                 }
 
-                case ESkillNodeType.RayTargeting:
+                case ESkillNodeType.TargetCone:
                 {
-                    float maxDist = node.GetFloat(ESkillParamKey.MaxDistance, c.LevelData, range);
+                    float maxDist = node.GetFloat(ESkillParamKey.MaxDistance, level, range);
                     float maxDistSq = maxDist * maxDist;
                     int max = node.GetInt(ESkillParamKey.MaxPerTarget, null, int.MaxValue);
                     Damageable.GetAllOfTeam(enemyTeam, _candidates);
@@ -159,13 +148,10 @@ namespace Jinhyeong_SkillSystem
             {
                 Damageable d = _scratch[i];
                 if (PlanarDistSq(d.transform.position, origin) <= maxSq)
-                {
                     outList.Add(d);
-                }
             }
         }
 
-        // XZ 평면 거리 제곱. 캐릭터 발 위치와 발사체 위치의 Y 차이로 인한 miss 방지.
         private static float PlanarDistSq(Vector3 a, Vector3 b)
         {
             float dx = a.x - b.x;

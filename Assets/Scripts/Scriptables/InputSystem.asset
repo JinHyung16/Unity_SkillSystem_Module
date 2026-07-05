@@ -12,17 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82e530bc189e18f43a4dad1a70497ef1, type: 3}
   m_Name: InputSystem
   m_EditorClassIdentifier: Assembly-CSharp::Jinhyeong_Input.InputBindings
-  MoveUp: 119
-  MoveDown: 115
-  MoveLeft: 97
-  MoveRight: 100
+  MoveUp: 273
+  MoveDown: 274
+  MoveLeft: 276
+  MoveRight: 275
   Attack: 323
   SkillSlots:
   - Key: 113
+  - Key: 119
   - Key: 101
   - Key: 114
-  - Key: 102
-  - Key: 122
-  - Key: 120
-  - Key: 99
-  - Key: 118

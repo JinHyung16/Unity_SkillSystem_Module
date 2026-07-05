@@ -11,7 +11,6 @@ namespace Jinhyeong_UI
         TopToBottom,
     }
 
-    /// <summary>지정한 RectTransform(_fillTarget)을 0~1 비율로 채워주는 범용 UI 컴포넌트. Image.type=Filled의 픽셀 깨짐 없이 anchorMin/Max를 직접 조정해 매끄럽게 잘림. _fillTarget을 비우면 자기 자신의 RectTransform을 사용. ExecuteAlways로 에디터에서도 Value/Direction 변경이 즉시 반영됨. SmoothTime>0이면 unscaledTime 기준 SmoothDamp 보간(게임 정지 중에도 동작).</summary>
     [ExecuteAlways]
     public class UISlice : BaseBehaviour
     {
@@ -61,7 +60,6 @@ namespace Jinhyeong_UI
             SetRatio(max > 0.0001f ? current / max : 0f);
         }
 
-        /// <summary>보간 없이 표시값을 즉시 Value로 스냅 (스폰/리셋 시).</summary>
         public void SnapToValue()
         {
             ApplyImmediate();
@@ -78,7 +76,6 @@ namespace Jinhyeong_UI
             if (target == null)
                 return;
 
-            // Play 중이고 보간 옵션이 있으면 SmoothDamp
             if (Application.isPlaying && _smoothTime > 0f)
             {
                 if (Mathf.Abs(_displayed - _value) < 1e-5f)
@@ -90,7 +87,6 @@ namespace Jinhyeong_UI
                 return;
             }
 
-            // 에디터 모드이거나 보간 비활성 — 즉시 동기화
             if (Mathf.Abs(_displayed - _value) > 1e-5f)
             {
                 WriteToTarget(target, _value);
@@ -142,8 +138,6 @@ namespace Jinhyeong_UI
             if (_smoothTime < 0f)
                 _smoothTime = 0f;
 
-            // OnValidate는 prefab 임포트 중에도 호출돼서 즉시 transform 변경이 위험할 수 있음.
-            // delayCall로 안전한 타이밍에 적용 → 슬라이더/필드 변경이 인스펙터에 1프레임 내로 보임.
             UnityEditor.EditorApplication.delayCall -= DelayedApply;
             UnityEditor.EditorApplication.delayCall += DelayedApply;
         }
@@ -158,7 +152,7 @@ namespace Jinhyeong_UI
 
         private void Reset()
         {
-            // 컴포넌트 처음 부착 시 — _fillTarget을 자식 "Fill" 또는 첫 자식으로 자동 잡기 (편의)
+
             if (_fillTarget != null)
                 return;
             Transform candidate = transform.Find("Fill");

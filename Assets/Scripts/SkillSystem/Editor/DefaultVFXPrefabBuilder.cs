@@ -1,13 +1,13 @@
 #if UNITY_EDITOR
 using System.IO;
 using UnityEditor;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 
 namespace Jinhyeong_SkillSystem.EditorTools
 {
-    /// <summary>스킬 Visual 키(vfx_bolt/vfx_strike/vfx_explosion_small)에 대응하는 URP 파티클 프리팹을 생성하는 에디터 헬퍼.
-    /// Assets/Prefabs/Skills의 기존 경로에 덮어써서 Addressables GUID를 유지한다(그룹 엔트리 무효화 방지).
-    /// 런타임 머티리얼 생성 금지 규칙에 따라 머티리얼은 Assets/Materials에 에셋으로 캐싱.</summary>
+
     public static class DefaultVFXPrefabBuilder
     {
         private const string PrefabFolder   = "Assets/Prefabs/Skills";
@@ -28,12 +28,21 @@ namespace Jinhyeong_SkillSystem.EditorTools
             BuildStrike();
             BuildExplosion();
 
+            Build("vfx_chain_lightning", new Color(0.6f, 0.85f, 1f, 1f), false, 0.35f, 5f, 0.35f, 0f, 40, 0.3f, 0f, false);
+            Build("vfx_meteor", new Color(1f, 0.45f, 0.15f, 1f), false, 0.5f, 3f, 0.75f, 0f, 50, 0.6f, 0.2f, true);
+            Build("vfx_lance", new Color(0.5f, 0.9f, 1f, 1f), true, 0.3f, 0f, 0.45f, 110f, 0, 0.2f, 0f, true);
+            Build("vfx_cleave", new Color(1f, 0.9f, 0.4f, 1f), false, 0.35f, 7f, 0.5f, 0f, 55, 0.5f, 0f, false);
+            Build("vfx_bomb", new Color(1f, 0.4f, 0.15f, 1f), false, 0.55f, 6.5f, 0.8f, 0f, 60, 0.6f, 0.15f, true);
+            Build("vfx_orb", new Color(0.7f, 0.45f, 1f, 1f), true, 0.4f, 0f, 0.55f, 80f, 0, 0.25f, 0f, false);
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("[DefaultVFXPrefabBuilder] URP 파티클 VFX 3종 재생성 완료 (Assets/Prefabs/Skills, GUID 유지)");
+
+            RegisterAddressables();
+
+            Debug.Log("[DefaultVFXPrefabBuilder] URP 파티클 VFX 9종 재생성 + 어드레서블 등록 완료 (Assets/Prefabs/Skills, GUID 유지)");
         }
 
-        // 날아가는 투사체: 월드 공간 연속 방출로 이동 경로에 트레일을 남긴다.
         private static void BuildBolt()
         {
             GameObject go = new GameObject("vfx_bolt");
@@ -44,7 +53,7 @@ namespace Jinhyeong_SkillSystem.EditorTools
             main.loop = true;
             main.startLifetime = 0.35f;
             main.startSpeed = 0f;
-            main.startSize = 0.28f;
+            main.startSize = 0.6f;
             main.startColor = BoltColor;
             main.gravityModifier = 0f;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
@@ -55,7 +64,7 @@ namespace Jinhyeong_SkillSystem.EditorTools
 
             ParticleSystem.ShapeModule shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = 0.12f;
+            shape.radius = 0.25f;
 
             ApplyFadeAndShrink(ps);
             ConfigureRenderer(go, GetOrCreateMaterial("SkillVfx_Bolt", BoltColor), ParticleSystemRenderMode.Billboard);
@@ -63,7 +72,6 @@ namespace Jinhyeong_SkillSystem.EditorTools
             SaveOver(go, "vfx_bolt");
         }
 
-        // 즉발 단일 히트: 스폰 즉시 바깥으로 튀는 짧은 버스트.
         private static void BuildStrike()
         {
             GameObject go = new GameObject("vfx_strike");
@@ -74,7 +82,7 @@ namespace Jinhyeong_SkillSystem.EditorTools
             main.loop = false;
             main.startLifetime = 0.3f;
             main.startSpeed = 4.5f;
-            main.startSize = 0.18f;
+            main.startSize = 0.42f;
             main.startColor = StrikeColor;
             main.gravityModifier = 0f;
             main.simulationSpace = ParticleSystemSimulationSpace.Local;
@@ -82,11 +90,11 @@ namespace Jinhyeong_SkillSystem.EditorTools
 
             ParticleSystem.EmissionModule emission = ps.emission;
             emission.rateOverTime = 0f;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 24) });
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 32) });
 
             ParticleSystem.ShapeModule shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = 0.2f;
+            shape.radius = 0.4f;
 
             ApplyFadeAndShrink(ps);
             ConfigureRenderer(go, GetOrCreateMaterial("SkillVfx_Strike", StrikeColor), ParticleSystemRenderMode.Billboard);
@@ -94,7 +102,6 @@ namespace Jinhyeong_SkillSystem.EditorTools
             SaveOver(go, "vfx_strike");
         }
 
-        // AoE/폭발: 넓은 방사형 버스트.
         private static void BuildExplosion()
         {
             GameObject go = new GameObject("vfx_explosion_small");
@@ -105,7 +112,7 @@ namespace Jinhyeong_SkillSystem.EditorTools
             main.loop = false;
             main.startLifetime = 0.5f;
             main.startSpeed = 6f;
-            main.startSize = 0.32f;
+            main.startSize = 0.7f;
             main.startColor = ExplosionColor;
             main.gravityModifier = 0.1f;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
@@ -113,11 +120,11 @@ namespace Jinhyeong_SkillSystem.EditorTools
 
             ParticleSystem.EmissionModule emission = ps.emission;
             emission.rateOverTime = 0f;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 40) });
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 50) });
 
             ParticleSystem.ShapeModule shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = 0.3f;
+            shape.radius = 0.6f;
 
             ApplyFadeAndShrink(ps);
             ConfigureRenderer(go, GetOrCreateMaterial("SkillVfx_Explosion", ExplosionColor), ParticleSystemRenderMode.Billboard);
@@ -125,7 +132,76 @@ namespace Jinhyeong_SkillSystem.EditorTools
             SaveOver(go, "vfx_explosion_small");
         }
 
-        // 수명 동안 알파 페이드 + 크기 축소로 스파크/글로우 느낌.
+        private static void Build(string name, Color color, bool loop, float lifetime, float startSpeed,
+            float startSize, float rateOverTime, int burst, float shapeRadius, float gravity, bool worldSpace)
+        {
+            GameObject go = new GameObject(name);
+            ParticleSystem ps = go.AddComponent<ParticleSystem>();
+
+            ParticleSystem.MainModule main = ps.main;
+            main.duration = loop ? 1f : Mathf.Max(0.4f, lifetime + 0.1f);
+            main.loop = loop;
+            main.startLifetime = lifetime;
+            main.startSpeed = startSpeed;
+            main.startSize = startSize;
+            main.startColor = color;
+            main.gravityModifier = gravity;
+            main.simulationSpace = worldSpace ? ParticleSystemSimulationSpace.World : ParticleSystemSimulationSpace.Local;
+            main.maxParticles = 256;
+
+            ParticleSystem.EmissionModule emission = ps.emission;
+            emission.rateOverTime = rateOverTime;
+            if (burst > 0)
+                emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)burst) });
+
+            ParticleSystem.ShapeModule shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = shapeRadius;
+
+            ApplyFadeAndShrink(ps);
+            ConfigureRenderer(go, GetOrCreateMaterial("SkillVfx_" + name, color), ParticleSystemRenderMode.Billboard);
+
+            SaveOver(go, name);
+        }
+
+        private static void RegisterAddressables()
+        {
+            AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
+            if (settings == null)
+            {
+                Debug.LogWarning("[DefaultVFXPrefabBuilder] Addressable 설정을 찾을 수 없어 등록을 건너뜀");
+                return;
+            }
+
+            AddressableAssetGroup group = settings.FindGroup("Skill");
+            if (group == null)
+                group = settings.DefaultGroup;
+
+            for (int i = 0; i < AllKeys.Length; i++)
+            {
+                string key = AllKeys[i];
+                string path = $"{PrefabFolder}/{key}.prefab";
+                string guid = AssetDatabase.AssetPathToGUID(path);
+                if (string.IsNullOrEmpty(guid))
+                {
+                    Debug.LogWarning($"[DefaultVFXPrefabBuilder] '{path}' GUID 조회 실패 — 등록 건너뜀");
+                    continue;
+                }
+                AddressableAssetEntry entry = settings.CreateOrMoveEntry(guid, group);
+                entry.address = key;
+            }
+
+            settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryModified, null, true);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static readonly string[] AllKeys =
+        {
+            "vfx_bolt", "vfx_strike", "vfx_explosion_small",
+            "vfx_chain_lightning", "vfx_meteor", "vfx_lance",
+            "vfx_cleave", "vfx_bomb", "vfx_orb",
+        };
+
         private static void ApplyFadeAndShrink(ParticleSystem ps)
         {
             ParticleSystem.ColorOverLifetimeModule col = ps.colorOverLifetime;
@@ -167,7 +243,6 @@ namespace Jinhyeong_SkillSystem.EditorTools
             Material mat = existing != null ? existing : new Material(sh);
             mat.shader = sh;
 
-            // URP/내장 양쪽에서 통하도록 색 프로퍼티를 방어적으로 모두 세팅.
             if (mat.HasProperty("_BaseColor"))
                 mat.SetColor("_BaseColor", color);
             if (mat.HasProperty("_Color"))
@@ -176,11 +251,10 @@ namespace Jinhyeong_SkillSystem.EditorTools
                 mat.SetColor("_TintColor", color);
             mat.color = color;
 
-            // 가산 블렌딩 + ZWrite off (URP Particles/Unlit 기준, 버전 차이는 무해하게 무시됨).
             if (mat.HasProperty("_Surface"))
-                mat.SetFloat("_Surface", 1f); // Transparent
+                mat.SetFloat("_Surface", 1f);
             if (mat.HasProperty("_Blend"))
-                mat.SetFloat("_Blend", 2f);     // Additive
+                mat.SetFloat("_Blend", 2f);
             if (mat.HasProperty("_ZWrite"))
                 mat.SetFloat("_ZWrite", 0f);
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");

@@ -6,12 +6,11 @@ using Jinhyeong_Managers;
 
 namespace Jinhyeong_AI
 {
-    /// <summary>Enemy 프리팹(OBJ_Enemy)을 Addressables로 로드해 풀을 관리하고 플레이어 등장 시 주변에 원형 배치로 초기 스폰하는 싱글톤. 씬에 둘 필요 없이 GameInitializer가 코드로 보장.</summary>
+
     public class EnemySpawner : BaseBehaviour
     {
         public static EnemySpawner Instance { get; private set; }
 
-        /// <summary>씬에 없을 때 코드로 싱글톤을 생성·보장. 반드시 메인 스레드에서 호출.</summary>
         public static EnemySpawner Ensure()
         {
             if (Instance != null)
@@ -26,7 +25,7 @@ namespace Jinhyeong_AI
         [SerializeField] private Transform _poolRoot;
         [SerializeField] private Transform _spawnAroundTarget;
 
-        private Enemy _prefab; // 어드레서블에서 해석한 프리팹 캐시.
+        private Enemy _prefab;
 
         private readonly Queue<Enemy> _pool = new Queue<Enemy>(16);
         private readonly List<Enemy> _active = new List<Enemy>(16);
@@ -151,8 +150,6 @@ namespace Jinhyeong_AI
             return e;
         }
 
-        /// <summary>활성/풀 적을 모두 파괴하고 스폰 상태를 초기화한다. GameInitializer가 종료/재시작 시 호출.
-        /// 적 인스턴스는 DontDestroyOnLoad인 이 스포너의 자식이라 씬 리로드로는 정리되지 않으므로 명시적으로 파괴.</summary>
         public void Clear()
         {
             for (int i = _active.Count - 1; i >= 0; i--)
@@ -175,7 +172,7 @@ namespace Jinhyeong_AI
 
             _initialSpawnDone = false;
             _spawnAroundTarget = null;
-            _prefab = null; // Addressable 핸들 해제 후 stale 참조 방지 — 다음 스폰 시 재조회.
+            _prefab = null;
         }
 
         public void Despawn(Enemy enemy)
@@ -208,7 +205,6 @@ namespace Jinhyeong_AI
             if (_prefab != null)
                 return _prefab;
 
-            // Addressables 캐시 전용 (WorldSpawner가 GAME START 시 obj_enemy를 사전로드). 폴백 없음 — 캐시 미스는 시끄럽게 실패.
             AddressableManager am = AddressableManager.Instance;
             GameObject go = am != null ? am.Get(_addressableKey) : null;
             if (go == null)

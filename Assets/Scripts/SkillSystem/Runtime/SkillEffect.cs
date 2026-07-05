@@ -6,7 +6,7 @@ using Jinhyeong_Common;
 
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>발사된 스킬 GO의 런타임 동작 컴포넌트. 모션(Instant/Linear/Arc/Curve), 히트 디스패치(Single/AoE/Beam/Chain/Death), 디스폰 규칙을 보유.</summary>
+
     public class SkillEffect : BaseBehaviour
     {
         public enum MotionMode
@@ -19,9 +19,14 @@ namespace Jinhyeong_SkillSystem
 
         public string PoolKey = PoolManager.KeyEmpty;
 
-        private CompiledSkill _c;
+        private SkillNodeData _hitNode;
+        private SkillNodeData _despawnNode;
+        private SkillLevelData _levelData;
+        private readonly List<SkillNodeData> _debuffNodes = new List<SkillNodeData>(2);
         private SkillObject _caster;
         private ESkillTeam _enemyTeam;
+        private bool _inited;
+
         private MotionMode _mode;
 
         private Vector3 _moveDir;
@@ -43,27 +48,27 @@ namespace Jinhyeong_SkillSystem
         private readonly Dictionary<Damageable, float> _lastHitTime = new Dictionary<Damageable, float>(16);
 
         private int _pulseCount;
-
         private bool _oneShotDone;
 
         private static readonly List<Damageable> _scanBuf = new List<Damageable>(64);
+        private static readonly List<Vector3> _chainPts = new List<Vector3>(8);
 
-        public void InitInstant(CompiledSkill c, SkillContext ctx)
+        public void InitInstant(SkillContext ctx)
         {
-            CommonInit(c, ctx, MotionMode.Instant);
+            CommonInit(ctx, MotionMode.Instant);
         }
 
-        public void InitLinear(CompiledSkill c, SkillContext ctx, Vector3 dir, float speed, float maxDist)
+        public void InitLinear(SkillContext ctx, Vector3 dir, float speed, float maxDist)
         {
-            CommonInit(c, ctx, MotionMode.Linear);
+            CommonInit(ctx, MotionMode.Linear);
             _moveDir = dir.sqrMagnitude > 0.0001f ? dir.normalized : transform.forward;
             _moveSpeed = speed;
             _maxDistance = maxDist;
         }
 
-        public void InitArc(CompiledSkill c, SkillContext ctx, Vector3 startPos, Vector3 endPos, float speed, float arcHeight)
+        public void InitArc(SkillContext ctx, Vector3 startPos, Vector3 endPos, float speed, float arcHeight)
         {
-            CommonInit(c, ctx, MotionMode.Arc);
+            CommonInit(ctx, MotionMode.Arc);
             _arcStart = startPos;
             _arcEnd = endPos;
             _arcHeight = arcHeight;
@@ -71,9 +76,9 @@ namespace Jinhyeong_SkillSystem
             _arcDuration = speed > 0.01f ? dist / speed : 1f;
         }
 
-        public void InitCurve(CompiledSkill c, SkillContext ctx, Vector3 startPos, Vector3 endPos, float speed, float amplitude)
+        public void InitCurve(SkillContext ctx, Vector3 startPos, Vector3 endPos, float speed, float amplitude)
         {
-            CommonInit(c, ctx, MotionMode.Curve);
+            CommonInit(ctx, MotionMode.Curve);
             _arcStart = startPos;
             _arcEnd = endPos;
             _curveAmplitude = amplitude;
@@ -81,9 +86,13 @@ namespace Jinhyeong_SkillSystem
             _arcDuration = speed > 0.01f ? dist / speed : 1f;
         }
 
-        private void CommonInit(CompiledSkill c, SkillContext ctx, MotionMode mode)
+        private void CommonInit(SkillContext ctx, MotionMode mode)
         {
-            _c = c;
+            _hitNode = ctx.HitNode;
+            _despawnNode = ctx.DespawnNode;
+            _levelData = ctx.LevelData;
+            _debuffNodes.Clear();
+            _debuffNodes.AddRange(ctx.DebuffNodes);
             _caster = ctx.Caster;
             _enemyTeam = SkillTeamUtil.Opposite(_caster != null ? _caster.Team : ESkillTeam.Friend);
             _mode = mode;
@@ -93,24 +102,23 @@ namespace Jinhyeong_SkillSystem
             _despawning = false;
             _pulseCount = 0;
             _oneShotDone = false;
+            _inited = true;
             _lastHitTime.Clear();
             ApplyHitShapeScale();
         }
 
         private void ApplyHitShapeScale()
         {
-            if (_c == null || _c.HitNode == null)
+            if (_hitNode == null)
                 return;
-            float radius = _c.HitNode.GetFloat(ESkillParamKey.Radius, _c.LevelData, 0f);
+            float radius = _hitNode.GetFloat(ESkillParamKey.Radius, _levelData, 0f);
             if (radius > 0f)
-            {
                 transform.localScale = Vector3.one * (radius * 2f);
-            }
         }
 
         private void Update()
         {
-            if (_c == null || _despawning)
+            if (_inited == false || _despawning)
                 return;
 
             switch (_mode)
@@ -170,9 +178,7 @@ namespace Jinhyeong_SkillSystem
                 Vector3 forward = (_arcEnd - _arcStart).normalized;
                 Vector3 right = Vector3.Cross(Vector3.up, forward);
                 if (right.sqrMagnitude < 0.0001f)
-                {
                     right = Vector3.Cross(Vector3.forward, forward);
-                }
                 right.Normalize();
                 float lateral = Mathf.Sin(t * Mathf.PI * 2f) * _curveAmplitude;
                 baseLine += right * lateral;
@@ -188,25 +194,25 @@ namespace Jinhyeong_SkillSystem
 
         private void ProcessHit(bool immediate, IList<Damageable> seedTargets)
         {
-            if (_c.HitNode == null)
+            if (_hitNode == null)
                 return;
-            switch (_c.HitNode.NodeType)
+            switch (_hitNode.NodeType)
             {
-                case ESkillNodeType.SingleHit:
+                case ESkillNodeType.HitSingle:
                     ProcessSingle(seedTargets);
                     break;
-                case ESkillNodeType.AoEHit:
+                case ESkillNodeType.HitArea:
                     ProcessAoE(seedTargets);
                     break;
-                case ESkillNodeType.BeamHit:
+                case ESkillNodeType.HitBeam:
                     if (immediate == false)
                         ProcessBeamTick();
                     break;
-                case ESkillNodeType.ChainLightningHit:
+                case ESkillNodeType.HitChain:
                     if (_oneShotDone == false)
                         ProcessBounce(seedTargets);
                     break;
-                case ESkillNodeType.DeathChainHit:
+                case ESkillNodeType.HitDeathBurst:
                     ProcessExplode(seedTargets);
                     break;
             }
@@ -214,8 +220,8 @@ namespace Jinhyeong_SkillSystem
 
         private void ProcessSingle(IList<Damageable> seedTargets)
         {
-            float radius = _c.HitNode.GetFloat(ESkillParamKey.Radius, _c.LevelData, 0.5f);
-            float damage = _c.HitNode.GetFloat(ESkillParamKey.Damage, _c.LevelData, 1f);
+            float radius = _hitNode.GetFloat(ESkillParamKey.Radius, _levelData, 0.5f);
+            float damage = _hitNode.GetFloat(ESkillParamKey.Damage, _levelData, 1f);
 
             Damageable d = seedTargets != null && seedTargets.Count > 0
                 ? seedTargets[0]
@@ -233,9 +239,9 @@ namespace Jinhyeong_SkillSystem
 
         private void ProcessAoE(IList<Damageable> seedTargets)
         {
-            float radius = _c.HitNode.GetFloat(ESkillParamKey.Radius, _c.LevelData, 0.5f);
-            float damage = _c.HitNode.GetFloat(ESkillParamKey.Damage, _c.LevelData, 1f);
-            int maxPerPulse = _c.HitNode.GetInt(ESkillParamKey.MaxPerTarget, null, int.MaxValue);
+            float radius = _hitNode.GetFloat(ESkillParamKey.Radius, _levelData, 0.5f);
+            float damage = _hitNode.GetFloat(ESkillParamKey.Damage, _levelData, 1f);
+            int maxPerPulse = _hitNode.GetInt(ESkillParamKey.MaxPerTarget, null, int.MaxValue);
 
             int hits = 0;
             if (seedTargets != null)
@@ -259,18 +265,16 @@ namespace Jinhyeong_SkillSystem
             }
 
             if (hits > 0)
-            {
                 BumpPulse();
-            }
         }
 
         private void ProcessBeamTick()
         {
-            float length = _c.HitNode.GetFloat(ESkillParamKey.Length, _c.LevelData, 5f);
-            float width = _c.HitNode.GetFloat(ESkillParamKey.Width, _c.LevelData, 1f);
-            float interval = _c.HitNode.GetFloat(ESkillParamKey.DamageInterval, null, 0.5f);
-            int maxPerTarget = _c.HitNode.GetInt(ESkillParamKey.MaxPerTarget, null, int.MaxValue);
-            float damage = _c.HitNode.GetFloat(ESkillParamKey.Damage, _c.LevelData, 1f);
+            float length = _hitNode.GetFloat(ESkillParamKey.Length, _levelData, 5f);
+            float width = _hitNode.GetFloat(ESkillParamKey.Width, _levelData, 1f);
+            float interval = _hitNode.GetFloat(ESkillParamKey.DamageInterval, null, 0.5f);
+            int maxPerTarget = _hitNode.GetInt(ESkillParamKey.MaxPerTarget, null, int.MaxValue);
+            float damage = _hitNode.GetFloat(ESkillParamKey.Damage, _levelData, 1f);
 
             Vector3 origin = transform.position;
             Vector3 forward = transform.forward;
@@ -295,11 +299,8 @@ namespace Jinhyeong_SkillSystem
                 if (perp.sqrMagnitude > halfWidth * halfWidth)
                     continue;
 
-                if (_lastHitTime.TryGetValue(d, out float lastT))
-                {
-                    if (Time.time - lastT < interval)
-                        continue;
-                }
+                if (_lastHitTime.TryGetValue(d, out float lastT) && Time.time - lastT < interval)
+                    continue;
                 if (CountHitsOn(d) >= maxPerTarget)
                     continue;
 
@@ -309,16 +310,14 @@ namespace Jinhyeong_SkillSystem
             }
 
             if (anyTickThisFrame > 0)
-            {
                 BumpPulse();
-            }
         }
 
         private void ProcessBounce(IList<Damageable> seedTargets)
         {
-            float jumpRange = _c.HitNode.GetFloat(ESkillParamKey.Range, _c.LevelData, 4f);
-            float damage = _c.HitNode.GetFloat(ESkillParamKey.Damage, _c.LevelData, 1f);
-            int maxJumps = _c.HitNode.GetInt(ESkillParamKey.MaxBounces, null, 3);
+            float jumpRange = _hitNode.GetFloat(ESkillParamKey.Range, _levelData, 4f);
+            float damage = _hitNode.GetFloat(ESkillParamKey.Damage, _levelData, 1f);
+            int maxTargets = Mathf.Max(1, _hitNode.GetInt(ESkillParamKey.MaxBounces, _levelData, 3));
 
             Damageable current = seedTargets != null && seedTargets.Count > 0
                 ? seedTargets[0]
@@ -327,18 +326,26 @@ namespace Jinhyeong_SkillSystem
             if (current == null || current.IsAlive == false)
                 return;
 
+            _chainPts.Clear();
+            Vector3 origin = _caster != null ? _caster.transform.position : transform.position;
+            _chainPts.Add(origin + Vector3.up);
+
             DealDamageTo(current, damage);
             _lastHitTime[current] = Time.time;
+            _chainPts.Add(current.transform.position + Vector3.up);
 
-            for (int j = 0; j < maxJumps; j++)
+            for (int hit = 1; hit < maxTargets; hit++)
             {
                 Damageable next = FindNearestUnchainedEnemy(current.transform.position, jumpRange);
                 if (next == null)
                     break;
                 DealDamageTo(next, damage);
                 _lastHitTime[next] = Time.time;
+                _chainPts.Add(next.transform.position + Vector3.up);
                 current = next;
             }
+
+            ChainLightningEffect.Spawn(_chainPts, new Color(0.6f, 0.85f, 1f, 1f));
 
             _oneShotDone = true;
             BumpPulse();
@@ -346,9 +353,9 @@ namespace Jinhyeong_SkillSystem
 
         private void ProcessExplode(IList<Damageable> seedTargets)
         {
-            float radius = _c.HitNode.GetFloat(ESkillParamKey.Radius, _c.LevelData, 2f);
-            float explodeRadius = _c.HitNode.GetFloat(ESkillParamKey.Range, _c.LevelData, radius);
-            float damage = _c.HitNode.GetFloat(ESkillParamKey.Damage, _c.LevelData, 1f);
+            float radius = _hitNode.GetFloat(ESkillParamKey.Radius, _levelData, 2f);
+            float explodeRadius = _hitNode.GetFloat(ESkillParamKey.Range, _levelData, radius);
+            float damage = _hitNode.GetFloat(ESkillParamKey.Damage, _levelData, 1f);
 
             Damageable primary = seedTargets != null && seedTargets.Count > 0
                 ? seedTargets[0]
@@ -389,26 +396,22 @@ namespace Jinhyeong_SkillSystem
 
         private void CheckHitCountDespawn()
         {
-            SkillNodeData ds = _c.DespawnNode;
-            if (ds == null || ds.NodeType != ESkillNodeType.OnHitDespawn)
+            SkillNodeData ds = _despawnNode;
+            if (ds == null || ds.NodeType != ESkillNodeType.DespawnAfterHits)
                 return;
             int max = Mathf.Max(1, ds.GetInt(ESkillParamKey.Value, null, 1));
             if (_pulseCount >= max)
-            {
                 Despawn();
-            }
         }
 
         private void CheckTimedDespawn()
         {
-            SkillNodeData ds = _c.DespawnNode;
-            if (ds == null || ds.NodeType != ESkillNodeType.DurationDespawn)
+            SkillNodeData ds = _despawnNode;
+            if (ds == null || ds.NodeType != ESkillNodeType.DespawnAfterTime)
                 return;
             float duration = ds.GetFloat(ESkillParamKey.Value, null, 1f);
             if (Time.time - _spawnTime >= duration)
-            {
                 Despawn();
-            }
         }
 
         private void Despawn()
@@ -420,13 +423,9 @@ namespace Jinhyeong_SkillSystem
             if (PoolManager.Instance != null
                 && string.IsNullOrEmpty(PoolKey) == false
                 && PoolKey != PoolManager.KeyEmpty)
-            {
                 PoolManager.Instance.Pool_Skill_Return(PoolKey, gameObject);
-            }
             else
-            {
                 Destroy(gameObject);
-            }
         }
 
         private bool TryDamageOnce(Damageable d, float damage)
@@ -452,11 +451,9 @@ namespace Jinhyeong_SkillSystem
 
         private void ApplyDebuffsTo(Damageable target)
         {
-            if (_c == null || _c.DebuffHitNodes == null)
-                return;
-            for (int i = 0; i < _c.DebuffHitNodes.Count; i++)
+            for (int i = 0; i < _debuffNodes.Count; i++)
             {
-                int debuffId = _c.DebuffHitNodes[i].GetInt(ESkillParamKey.DebuffId, null, 0);
+                int debuffId = _debuffNodes[i].GetInt(ESkillParamKey.DebuffId, null, 0);
                 if (debuffId <= 0)
                     continue;
                 SkillDebuffData data = SkillBuffRegistry.GetDebuff(debuffId);
@@ -535,9 +532,7 @@ namespace Jinhyeong_SkillSystem
                 if (d.Team != _enemyTeam)
                     continue;
                 if (PointPlanarDistSq(d.transform.position, origin) <= rSq)
-                {
                     outList.Add(d);
-                }
             }
         }
 
@@ -554,9 +549,7 @@ namespace Jinhyeong_SkillSystem
                 if (d.Team != _enemyTeam)
                     continue;
                 if (SweepPlanarDistSq(segStart, segEnd, d.transform.position) <= rSq)
-                {
                     outList.Add(d);
-                }
             }
         }
 
@@ -567,8 +560,6 @@ namespace Jinhyeong_SkillSystem
             return dx * dx + dz * dz;
         }
 
-        // XZ 평면에서 선분(segStart→segEnd)과 점(p) 사이 최단거리 제곱.
-        // 빠른 발사체가 한 프레임에 적을 통과해도 잡히게 하기 위함. Y 차이는 무시한다(캐릭터/발사체 height 차이로 인한 miss 방지).
         private static float SweepPlanarDistSq(Vector3 segStart, Vector3 segEnd, Vector3 p)
         {
             float ax = segStart.x, az = segStart.z;

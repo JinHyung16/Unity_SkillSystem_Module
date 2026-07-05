@@ -4,11 +4,12 @@ using Jinhyeong_GeneratedEnums;
 
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>SkillBTNode 시트의 한 행. 스킬 시퀀스 노드 하나의 타입/순서와 파라미터 dict를 보관하고 GetFloat/Int/Bool/String 헬퍼로 레벨 모디파이어 폴백을 제공.</summary>
+
     public class SkillNodeData
     {
         public int SkillId;
         public int NodeId;
+        public int ParentId;
         public int Order;
         public ESkillNodeType NodeType;
 

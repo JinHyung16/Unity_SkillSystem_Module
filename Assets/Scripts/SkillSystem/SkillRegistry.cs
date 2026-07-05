@@ -10,7 +10,7 @@ using Jinhyeong_GeneratedEnums;
 
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>skill_id 기준 SkillDefinition 캐시. DataManager로부터 Skill/SkillLevel/SkillBTNode 3종 테이블을 한 번에 로드해 노드 정렬과 버프 사이드카 로딩까지 처리.</summary>
+
     public static class SkillRegistry
     {
         public const string TableSkill       = "Skill";
@@ -111,30 +111,13 @@ namespace Jinhyeong_SkillSystem
                 if (id <= 0)
                     continue;
 
-                ESkillTriggerType trigger = ESkillTriggerType.None;
-                string triggerRaw = t.GetString(r, "trigger");
-                if (string.IsNullOrEmpty(triggerRaw) == false
-                    && Enum.TryParse(triggerRaw, true, out ESkillTriggerType parsedTrigger))
-                {
-                    trigger = parsedTrigger;
-                }
-
-                ESkillCategory category = ESkillCategory.None;
-                string categoryRaw = t.GetString(r, "category");
-                if (string.IsNullOrEmpty(categoryRaw) == false
-                    && Enum.TryParse(categoryRaw, true, out ESkillCategory parsedCategory))
-                {
-                    category = parsedCategory;
-                }
-
                 SkillData meta = new SkillData
                 {
                     Id = id,
                     Name = t.GetString(r, "name"),
                     Description = t.GetString(r, "desc"),
                     MaxLevel = Math.Max(1, t.GetInt(r, "max_level")),
-                    Trigger = trigger,
-                    Category = category,
+                    VisualPath = t.GetString(r, "visual_path"),
                 };
                 Add(new SkillDefinition { Meta = meta });
             }
@@ -215,6 +198,7 @@ namespace Jinhyeong_SkillSystem
                 {
                     SkillId = skillId,
                     NodeId = t.GetInt(r, "node_id"),
+                    ParentId = t.GetInt(r, "parent_id"),
                     Order = t.GetInt(r, "order"),
                     NodeType = nodeType,
                 };
@@ -249,7 +233,6 @@ namespace Jinhyeong_SkillSystem
             }
         }
 
-        /// <summary>로드된 전 스킬의 노드 Visual param을 distinct 수집. spawn 시 실제 사용되는 키만 모아 Addressables 사전로드에 쓴다.</summary>
         public static void CollectVisualKeys(ICollection<string> buffer)
         {
             if (buffer == null)
@@ -272,7 +255,6 @@ namespace Jinhyeong_SkillSystem
             }
         }
 
-        /// <summary>스킬 VFX 프리팹을 Addressables로 사전로드해 spawn 시 동기 조회가 가능하도록 캐시를 워밍한다. 반드시 메인 스레드에서 호출. AddressableManager가 키를 dedupe하므로 반복 호출 안전.</summary>
         public static async UniTask PreloadVisualsAsync()
         {
             HashSet<string> keys = new HashSet<string>();

@@ -7,7 +7,7 @@ using Jinhyeong_Common;
 
 namespace Jinhyeong_Managers
 {
-    /// <summary>Addressables 키별 prefab을 비동기로 로드/캐싱하는 싱글톤. PoolManager가 풀 미스 시 여기서 prefab을 꺼내 Instantiate.</summary>
+
     public class AddressableManager : BaseBehaviour
     {
         public static AddressableManager Instance { get; private set; }
@@ -26,7 +26,6 @@ namespace Jinhyeong_Managers
             DontDestroyOnLoad(gameObject);
         }
 
-        /// <summary>씬에 _AddressableManager가 배치되지 않은 경우를 위한 자가생성. 반드시 메인 스레드에서 호출.</summary>
         public static AddressableManager Ensure()
         {
             if (Instance != null)

@@ -18,7 +18,6 @@ namespace Jinhyeong_UI
         public TextMeshProUGUI Label;
     }
 
-    /// <summary>게임 시작 화면 컨트롤러. Canvas/Button/Text는 prefab에서 구성하고 SerializeField로 참조만 받음(코드 자체 생성 없음). SkillRegistry 비동기 로드 → 슬롯 라벨 갱신 → GAME START 클릭 시 동적 SkillLoadout 생성 → Player.SkillObject에 장착 → GameFlow.StartGame(). GameFlow가 Resources/Prefabs/StartScreen.prefab을 자동 Instantiate하므로 Main.unity 직접 수정은 불필요.</summary>
     public class StartScreen : BaseBehaviour
     {
         [Header("UI Refs")]
@@ -47,9 +46,8 @@ namespace Jinhyeong_UI
                 StartScreenSlot s = _slots[i];
                 if (s == null || s.Button == null || s.Label == null)
                 {
-                    Debug.LogError($"[StartScreen] _slots[{i}] 구성 누락 — Button/Label을 인스펙터에서 바인딩해야 함", this);
-                    enabled = false;
-                    return;
+                    Debug.LogError($"[StartScreen] _slots[{i}] 구성 누락 — Button/Label을 인스펙터에서 바인딩해야 함(해당 슬롯만 건너뜀)", this);
+                    continue;
                 }
                 KeyCode captured = s.Key;
                 s.Button.onClick.AddListener(() => OnSlotClicked(captured));
@@ -162,6 +160,8 @@ namespace Jinhyeong_UI
             for (int i = 0; i < _slots.Count; i++)
             {
                 StartScreenSlot s = _slots[i];
+                if (s == null || s.Label == null)
+                    continue;
                 int id = _slotSkillId.TryGetValue(s.Key, out int v) ? v : 0;
                 string skillName = "(없음)";
                 if (id != 0)
@@ -191,7 +191,6 @@ namespace Jinhyeong_UI
                 lo.Entries.Add(new EquippedSkillEntry { SkillId = kv.Value, Level = 1, SlotKey = kv.Key });
             }
 
-            // 씬에 미리 박힌 플레이어가 있으면 그쪽에 장착, 없으면 Addressables로 스폰.
             Player player = GameEvents.CurrentPlayer;
             if (player != null && player.Skills != null)
             {

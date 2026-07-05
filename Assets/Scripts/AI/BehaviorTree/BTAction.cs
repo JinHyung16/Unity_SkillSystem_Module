@@ -2,7 +2,7 @@ using System;
 
 namespace Jinhyeong_AI.BehaviorTree
 {
-    /// <summary>전달받은 델리게이트를 매 Tick마다 실행해 EBTStatus를 반환하는 리프 노드.</summary>
+
     public class BTAction : BTNode
     {
         private readonly Func<float, EBTStatus> _action;

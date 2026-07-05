@@ -4,7 +4,7 @@ using Jinhyeong_Managers;
 
 namespace Jinhyeong_Character
 {
-    /// <summary>플레이어 주위를 우클릭 드래그로 yaw/pitch 회전하고 마우스 휠로 zoom in/out 하는 MMORPG식 3인칭 카메라. yaw/pitch/distance를 구면 좌표로 보유하고 LateUpdate에서 SmoothDamp로 위치를 따라가며 LookAt으로 타겟을 응시한다. 입력은 레거시 Input(우클릭, Mouse X/Y, Mouse ScrollWheel).</summary>
+
     public class CameraFollow : BaseBehaviour
     {
         [Header("Follow")]
@@ -59,17 +59,13 @@ namespace Jinhyeong_Character
 
         public static CameraFollow Active { get; private set; }
 
-        /// <summary>현재 활성 게임 카메라. 월드 빌보드/스크린 좌표 계산 등에서 Camera.main 대신 사용.</summary>
         public static Camera GameCamera { get { return Active != null ? Active._gameCamera : null; } }
 
-        /// <summary>현재 활성 UI 전용 카메라(없으면 null).</summary>
         public static Camera UICamera { get { return Active != null ? Active._uiCamera : null; } }
 
         private void Awake()
         {
-            // Main.unity에서 OBJ_Camera가 Player의 자식으로 박혀있으면 부모 yaw 회전이
-            // 카메라 worldPos에 매 프레임 영향을 주면서 SmoothDamp가 잡아내지 못하는 jitter를 만든다.
-            // 런타임에 루트로 detach해서 카메라를 완전히 독립적으로 만든다 (worldPos 유지).
+
             if (transform.parent != null)
             {
                 transform.SetParent(null, true);
@@ -147,9 +143,6 @@ namespace Jinhyeong_Character
 
             transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref _velocity, _smoothTime);
 
-            // 회전은 SmoothDamp 위치가 아니라 desiredPos 기준으로 잡는다.
-            // 그러지 않으면 캐릭터 이동 중에 transform.position이 desiredPos보다 뒤쳐져서
-            // lookDir의 yaw가 흔들리고 카메라가 좌/우로 살짝 도는 것처럼 보임.
             transform.rotation = orbitRot;
         }
 
@@ -233,7 +226,7 @@ namespace Jinhyeong_Character
                         _gameCamera = c;
                 }
             }
-            // 게임 카메라가 안 잡혔으면 첫 번째 카메라를 폴백
+
             if (_gameCamera == null && cams.Length > 0)
                 _gameCamera = cams[0];
         }

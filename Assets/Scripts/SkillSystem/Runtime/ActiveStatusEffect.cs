@@ -4,7 +4,7 @@ using Jinhyeong_Common;
 
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>Buff/Debuff를 대상 GO에 컴포넌트로 부착해 지속시간, 주기 틱, enter/exit 스탯 변경을 자체 관리하는 런타임 상태이상 인스턴스.</summary>
+
     public class ActiveStatusEffect : BaseBehaviour
     {
         public enum Kind { Buff, Debuff }

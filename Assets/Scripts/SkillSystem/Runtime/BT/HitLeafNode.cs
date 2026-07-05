@@ -1,0 +1,14 @@
+namespace Jinhyeong_SkillSystem.BT
+{
+
+    public sealed class HitLeafNode : BTNode
+    {
+        public HitLeafNode(SkillNodeData data) : base(data) { }
+
+        public override EBTStatus Tick(SkillContext ctx)
+        {
+            ctx.HitNode = Data;
+            return EBTStatus.Success;
+        }
+    }
+}

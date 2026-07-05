@@ -9,7 +9,6 @@ namespace Jinhyeong_Character
         WorldYaw,
     }
 
-    /// <summary>캐릭터의 평면 facing을 관리하는 컴포넌트. DfoSign 모드는 ±X 좌우 플립(던파식), WorldYaw 모드는 ForwardWorld로 들어온 임의 평면 방향으로 yaw 회전(3D MMORPG식).</summary>
     public class CharacterFacing : BaseBehaviour
     {
         [HideInInspector] public float TurnSpeed;

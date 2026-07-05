@@ -5,7 +5,7 @@ using Jinhyeong_Common;
 
 namespace Jinhyeong_Character
 {
-    /// <summary>전방 부채꼴 범위에서 가장 가까운 적 Damageable을 찾아 근접 공격을 가하는 컴포넌트. 쿨다운과 SkillObject의 데미지 배율을 반영.</summary>
+
     [RequireComponent(typeof(SkillObject))]
     public class CharacterAttack : BaseBehaviour
     {
@@ -30,7 +30,6 @@ namespace Jinhyeong_Character
                 return false;
             _nextReadyTime = Time.time + Cooldown;
 
-            // 기본공격이 실행되는 순간 = OnAttack 트리거 시점. 스킬이 스스로 타겟을 탐색하므로 적 유무와 무관하게 통보.
             if (_caster != null)
                 _caster.NotifyAttack();
 

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Jinhyeong_Input
 {
-    /// <summary>이동/공격/스킬 슬롯의 KeyCode 매핑을 보관하는 ScriptableObject. CreateAssetMenu로 에셋으로 생성해 공유.</summary>
+
     [CreateAssetMenu(menuName = "Jinhyeong/Input/Input Bindings", fileName = "InputBindings")]
     public class InputBindings : ScriptableObject
     {

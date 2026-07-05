@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Jinhyeong_Character.Editor
 {
-    /// <summary>메시 정점 위치 기반으로 평균 normal을 계산해 vertex color에 패킹하는 에디터 베이커. 아웃라인 셰이더용 스무딩 노멀 생성.</summary>
+
     public static class SmoothNormalBaker
     {
         private const string MenuPath = "Jinhyeong/Tools/Bake Smooth Normals to Vertex Color";

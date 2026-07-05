@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 
 namespace Jinhyeong_UI
 {
-    /// <summary>게임 시작 게이트. Play 진입 시 timeScale=0으로 모든 로직을 멈추고, 씬에 미리 박혀있는 StartScreen이 시작 버튼을 처리. 시작 시 timeScale=1로 재개한다.</summary>
+
     public static class GameFlow
     {
         public static bool IsRunning { get; private set; }

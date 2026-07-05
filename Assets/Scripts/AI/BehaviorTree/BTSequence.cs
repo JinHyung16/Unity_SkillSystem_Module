@@ -1,6 +1,6 @@
 namespace Jinhyeong_AI.BehaviorTree
 {
-    /// <summary>자식들을 순차 실행하다가 하나라도 Failure면 즉시 Failure 반환. 모두 성공하면 Success.</summary>
+
     public class BTSequence : BTComposite
     {
         public override EBTStatus Tick(float deltaTime)

@@ -5,7 +5,7 @@ using Jinhyeong_Common;
 
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>피격 가능한 엔티티 컴포넌트. HP/Shield/스턴/속도배율 등 상태이상 영향 필드를 보유하고 전역 인스턴스 목록을 유지해 타게팅이 FindObjects 없이 조회 가능.</summary>
+
     public class Damageable : BaseBehaviour
     {
         public ESkillTeam Team = ESkillTeam.Enemy;
@@ -26,17 +26,84 @@ namespace Jinhyeong_SkillSystem
 
         public bool IsAlive { get { return Hp > 0f; } }
 
+        private const float FlashDuration = 0.09f;
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+
+        private readonly List<Renderer> _bodyRenderers = new List<Renderer>(4);
+        private MaterialPropertyBlock _flashMpb;
+        private bool _renderersCached;
+        private float _flashUntil;
+        private bool _flashing;
+
         protected override void OnEnabled()
         {
             if (_all.Contains(this) == false)
             {
                 _all.Add(this);
             }
+            CacheRenderers();
+        }
+
+        private void CacheRenderers()
+        {
+            if (_renderersCached)
+                return;
+            _renderersCached = true;
+            Renderer[] found = GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < found.Length; i++)
+            {
+                Renderer r = found[i];
+                if (r is MeshRenderer || r is SkinnedMeshRenderer)
+                    _bodyRenderers.Add(r);
+            }
+        }
+
+        private void Update()
+        {
+            if (_flashing == false)
+                return;
+            if (Time.time < _flashUntil)
+                return;
+
+            _flashing = false;
+            for (int i = 0; i < _bodyRenderers.Count; i++)
+            {
+                if (_bodyRenderers[i] != null)
+                    _bodyRenderers[i].SetPropertyBlock(null);
+            }
+        }
+
+        private void StartHitFlash()
+        {
+            if (_bodyRenderers.Count == 0)
+                return;
+            if (_flashMpb == null)
+                _flashMpb = new MaterialPropertyBlock();
+            _flashMpb.SetColor(BaseColorId, Color.white);
+            _flashMpb.SetColor(ColorId, Color.white);
+            for (int i = 0; i < _bodyRenderers.Count; i++)
+            {
+                if (_bodyRenderers[i] != null)
+                    _bodyRenderers[i].SetPropertyBlock(_flashMpb);
+            }
+            _flashing = true;
+            _flashUntil = Time.time + FlashDuration;
         }
 
         protected override void OnDisabled()
         {
             _all.Remove(this);
+
+            if (_flashing)
+            {
+                _flashing = false;
+                for (int i = 0; i < _bodyRenderers.Count; i++)
+                {
+                    if (_bodyRenderers[i] != null)
+                        _bodyRenderers[i].SetPropertyBlock(null);
+                }
+            }
         }
 
         public static List<Damageable> GetAllOfTeam(ESkillTeam team, List<Damageable> buffer = null)
@@ -70,6 +137,12 @@ namespace Jinhyeong_SkillSystem
                 incoming -= absorbed;
             }
             Hp -= incoming;
+
+            if (incoming > 0f)
+            {
+                HitEffect.Spawn(transform.position + Vector3.up * 1f, new Color(1f, 0.35f, 0.2f));
+                StartHitFlash();
+            }
 
             if (OnHealthChanged != null)
                 OnHealthChanged.Invoke(this);

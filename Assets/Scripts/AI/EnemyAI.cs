@@ -4,10 +4,11 @@ using Jinhyeong_AI.BehaviorTree;
 using Jinhyeong_Character;
 using Jinhyeong_Common;
 using Jinhyeong_SkillSystem;
+using Jinhyeong_Collision;
 
 namespace Jinhyeong_AI
 {
-    /// <summary>적 캐릭터의 BT 기반 의사결정. Flee/Attack/Chase/Patrol Selector 트리를 구성하고 타겟 인지, 사격, 순찰을 처리한다.</summary>
+
     [RequireComponent(typeof(Damageable))]
     [RequireComponent(typeof(SkillObject))]
     [RequireComponent(typeof(CharacterMotor))]
@@ -20,6 +21,7 @@ namespace Jinhyeong_AI
         private CharacterMotor _motor;
         private CharacterFacing _facing;
         private BehaviorTreeRunner _runner;
+        private AABBCollider _ownBox;
 
         private Vector3 _spawnPosition;
 
@@ -41,6 +43,7 @@ namespace Jinhyeong_AI
             _motor  = GetComponent<CharacterMotor>();
             _facing = GetComponent<CharacterFacing>();
             _runner = GetComponent<BehaviorTreeRunner>();
+            _ownBox = GetComponentInChildren<AABBCollider>();
 
             _spawnPosition = transform.position;
 
@@ -159,8 +162,20 @@ namespace Jinhyeong_AI
                 return EBTStatus.Failure;
 
             _motor.SpeedMultiplier = CommonConfig.Enemy.ChaseSpeedMultiplier;
-            _motor.MoveAxis = Vector2.zero;
-            FaceDir(_target.transform.position - transform.position);
+
+            Vector3 toTarget = _target.transform.position - transform.position;
+            toTarget.y = 0f;
+            float dist = toTarget.magnitude;
+            if (dist > 0.0001f && dist < CommonConfig.Enemy.StandoffDistance)
+            {
+                Vector3 away = -toTarget / dist;
+                _motor.MoveAxis = new Vector2(away.x, away.z);
+            }
+            else
+            {
+                _motor.MoveAxis = Vector2.zero;
+            }
+            FaceDir(toTarget);
 
             _attackTimer -= dt;
             if (_attackTimer <= 0f)
@@ -286,12 +301,8 @@ namespace Jinhyeong_AI
                 if (dist < 0.2f)
                     continue;
 
-                Vector3 rayOrigin = transform.position + Vector3.up * Mathf.Max(0.1f, CommonConfig.Enemy.AIRayHeight);
-                Vector3 rayDir = to / dist;
-                if (Physics.Raycast(rayOrigin, rayDir, dist, CommonConfig.Enemy.ObstacleMask, QueryTriggerInteraction.Ignore))
-                {
+                if (AABBPhysics.SegmentBlockedXZ(transform.position, candidate, 0.5f, _ownBox))
                     continue;
-                }
 
                 _patrolTarget = candidate;
                 _hasPatrolTarget = true;

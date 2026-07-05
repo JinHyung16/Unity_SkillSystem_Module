@@ -3,7 +3,7 @@ using Jinhyeong_Common;
 
 namespace Jinhyeong_Input
 {
-    /// <summary>WASD 기반 IInputProvider 구현. 던파식 좌우 플립을 위해 가로 입력 부호만 FacingSign으로 노출 (마우스 조준 없음).</summary>
+
     public class KeyboardInputProvider : BaseBehaviour, IInputProvider
     {
         public InputBindings Bindings;

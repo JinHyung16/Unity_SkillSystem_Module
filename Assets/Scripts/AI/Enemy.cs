@@ -7,7 +7,7 @@ using Jinhyeong_SkillSystem;
 
 namespace Jinhyeong_AI
 {
-    /// <summary>적 캐릭터 루트 컴포넌트. 하위 컴포넌트(SerializeField로 명시 바인딩)를 묶고 풀에서 꺼낼 때 CommonConfig 값으로 초기화한다.</summary>
+
     public class Enemy : BaseBehaviour
     {
         [Header("Bound Components")]
@@ -34,7 +34,7 @@ namespace Jinhyeong_AI
 
         private void Awake()
         {
-            // 필수 바인딩 검증 — fail-fast. 자동 GetComponent 폴백 없음.
+
             _bindingValid =
                 RequireRef(_damageable, nameof(_damageable)) &&
                 RequireRef(_skills, nameof(_skills)) &&

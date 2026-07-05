@@ -4,13 +4,11 @@ using Jinhyeong_Common;
 
 namespace Jinhyeong_Managers
 {
-    /// <summary>스킬 VFX의 Queue 풀을 관리하는 싱글톤. 풀 미스 시 AddressableManager 캐시에서 Instantiate. Addressables 미로드 시 Resources/Prefabs 경로로 자동 폴백.</summary>
+
     public partial class PoolManager : BaseBehaviour
     {
         public const string KeyEmpty = "Empty";
 
-        // 키 → 시도해볼 Resources 경로(prefix 없음, Resources/ 기준).
-        // 일치하는 항목이 없으면 키 자체를 마지막으로 시도한 뒤 한 번만 경고 후 캐시.
         private static readonly string[] ResourcesPathPrefixes =
         {
             "Prefabs/Skills/",
@@ -41,7 +39,6 @@ namespace Jinhyeong_Managers
                 PoolRoot = transform;
         }
 
-        /// <summary>씬에 없을 때 코드로 싱글톤을 생성·보장. 반드시 메인 스레드에서 호출.</summary>
         public static PoolManager Ensure()
         {
             if (Instance != null)
@@ -74,13 +71,12 @@ namespace Jinhyeong_Managers
 
         private GameObject ResolvePrefab(string key)
         {
-            // 1) Addressables 캐시
+
             AddressableManager am = AddressableManager.Instance;
             GameObject prefab = am != null ? am.Get(key) : null;
             if (prefab != null)
                 return prefab;
 
-            // 2) Resources 폴백 (메모리 캐시)
             if (_resourcesCache.TryGetValue(key, out prefab) && prefab != null)
                 return prefab;
 
@@ -94,7 +90,6 @@ namespace Jinhyeong_Managers
                 }
             }
 
-            // 3) 모두 실패 — 키마다 한 번만 경고
             if (_missingWarned.Add(key))
             {
                 Debug.LogWarning($"[PoolManager] '{key}' prefab을 Addressables / Resources에서 찾을 수 없음 (이 키는 한 번만 경고)");

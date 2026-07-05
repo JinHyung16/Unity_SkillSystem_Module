@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Jinhyeong_Input;
 using Jinhyeong_SkillSystem;
@@ -5,7 +6,7 @@ using Jinhyeong_Common;
 
 namespace Jinhyeong_Character
 {
-    /// <summary>IInputProvider의 입력을 Motor/Facing/Attack/Skills에 분배하는 어댑터. 매 Update에서 이동축, 좌우 facing 부호, 공격, 스킬 슬롯 키를 처리.</summary>
+
     [RequireComponent(typeof(CharacterMotor))]
     [RequireComponent(typeof(CharacterFacing))]
     [RequireComponent(typeof(CharacterAttack))]
@@ -21,15 +22,16 @@ namespace Jinhyeong_Character
         private CharacterAttack _attack;
         private SkillObject _skills;
 
+        private static readonly List<Damageable> _enemyScan = new List<Damageable>(64);
+
         private void Awake()
         {
-            // RequireComponent로 보장되는 동일 GO 컴포넌트 — 폴백이 아니라 보장된 획득.
+
             _motor = GetComponent<CharacterMotor>();
             _facing = GetComponent<CharacterFacing>();
             _attack = GetComponent<CharacterAttack>();
             _skills = GetComponent<SkillObject>();
 
-            // 명시 바인딩 필수 — 미바인딩이면 fail-fast (GetComponent 폴백 없음).
             if (RequireRef(InputSource, nameof(InputSource)) == false)
                 return;
             if (RequireRef(Bindings, nameof(Bindings)) == false)
@@ -58,6 +60,10 @@ namespace Jinhyeong_Character
             {
                 _attack.TryFire(_facing.ForwardPlanar);
             }
+            else
+            {
+                AutoAttackNearestEnemy();
+            }
 
             for (int i = 0; i < Bindings.SkillSlots.Count; i++)
             {
@@ -69,6 +75,41 @@ namespace Jinhyeong_Character
                     _skills.TryFireSlot(slotKey);
                 }
             }
+        }
+
+        private void AutoAttackNearestEnemy()
+        {
+            Damageable target = FindNearestEnemyInRange(CommonConfig.Player.AutoAttackRange);
+            if (target == null)
+                return;
+
+            Vector3 to = target.transform.position - transform.position;
+            to.y = 0f;
+            Vector3 dir = to.sqrMagnitude > 0.0001f ? to.normalized : _facing.ForwardPlanar;
+            _attack.TryFire(dir);
+        }
+
+        private Damageable FindNearestEnemyInRange(float range)
+        {
+            ESkillTeam enemyTeam = SkillTeamUtil.Opposite(_skills != null ? _skills.Team : ESkillTeam.Friend);
+            Damageable.GetAllOfTeam(enemyTeam, _enemyScan);
+
+            float maxSq = range * range;
+            Damageable best = null;
+            float bestSq = float.MaxValue;
+            for (int i = 0; i < _enemyScan.Count; i++)
+            {
+                Damageable d = _enemyScan[i];
+                Vector3 to = d.transform.position - transform.position;
+                to.y = 0f;
+                float sq = to.sqrMagnitude;
+                if (sq <= maxSq && sq < bestSq)
+                {
+                    bestSq = sq;
+                    best = d;
+                }
+            }
+            return best;
         }
 
         private Vector3 ComputeCameraRelativeMove(Vector2 axis)

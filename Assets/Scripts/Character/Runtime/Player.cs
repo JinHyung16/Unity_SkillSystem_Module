@@ -6,7 +6,7 @@ using Jinhyeong_SkillSystem;
 
 namespace Jinhyeong_Character
 {
-    /// <summary>플레이어 루트 컴포넌트. 하위 컴포넌트(SerializeField로 명시 바인딩)를 묶고 CommonConfig 값으로 초기화한 뒤 GameEvents에 스폰을 브로드캐스트.</summary>
+
     public class Player : BaseBehaviour
     {
         [Header("Bound Components")]
@@ -26,7 +26,7 @@ namespace Jinhyeong_Character
 
         private void Awake()
         {
-            // 필수 바인딩 검증 — 하나라도 비면 시끄럽게 죽고(fail-fast) 자동 GetComponent 폴백은 하지 않는다.
+
             if (RequireRef(_damageable, nameof(_damageable)) == false)
                 return;
             if (RequireRef(_skills, nameof(_skills)) == false)

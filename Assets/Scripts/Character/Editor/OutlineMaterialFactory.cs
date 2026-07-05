@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Jinhyeong_Character.Editor
 {
-    /// <summary>Outline_Lit 셰이더 기반 머티리얼을 Assets/Materials 폴더에 캐싱 생성/갱신하는 에디터 팩토리.</summary>
+
     public static class OutlineMaterialFactory
     {
         public const string ShaderName = "Jinhyeong/Outline_Lit";

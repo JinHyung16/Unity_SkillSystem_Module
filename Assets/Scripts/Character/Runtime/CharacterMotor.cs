@@ -1,9 +1,10 @@
 using UnityEngine;
 using Jinhyeong_Common;
+using Jinhyeong_Collision;
 
 namespace Jinhyeong_Character
 {
-    /// <summary>MoveAxis 입력과 중력을 합쳐 CharacterController로 이동시키는 컴포넌트. SpeedMultiplier로 외부 버프/디버프 반영.</summary>
+
     [RequireComponent(typeof(CharacterController))]
     public class CharacterMotor : BaseBehaviour
     {
@@ -11,6 +12,7 @@ namespace Jinhyeong_Character
         [HideInInspector] public float SpeedMultiplier = 1f;
 
         private CharacterController _cc;
+        private AABBCollider _ownBox;
         private float _verticalVelocity;
 
         public Vector2 MoveAxis { get; set; }
@@ -19,6 +21,7 @@ namespace Jinhyeong_Character
         private void Awake()
         {
             _cc = GetComponent<CharacterController>();
+            _ownBox = GetComponentInChildren<AABBCollider>();
         }
 
         private void Update()
@@ -43,8 +46,16 @@ namespace Jinhyeong_Character
         {
             Vector2 axis = MoveAxis;
             Vector3 planar = new Vector3(axis.x, 0f, axis.y) * MoveSpeed * SpeedMultiplier;
-            Vector3 velocity = planar + Vector3.up * _verticalVelocity;
-            LastCollisionFlags = _cc.Move(velocity * Time.deltaTime);
+            Vector3 planarDelta = planar * Time.deltaTime;
+
+            float radius = _cc.radius;
+            Vector3 resolved = AABBPhysics.ResolvePlanarMove(transform.position, planarDelta, radius, _ownBox);
+            bool blocked = (resolved - planarDelta).sqrMagnitude > 1e-8f;
+
+            Vector3 delta = new Vector3(resolved.x, _verticalVelocity * Time.deltaTime, resolved.z);
+            LastCollisionFlags = _cc.Move(delta);
+            if (blocked)
+                LastCollisionFlags |= CollisionFlags.Sides;
         }
     }
 }

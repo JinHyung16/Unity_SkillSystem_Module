@@ -1,6 +1,6 @@
 namespace Jinhyeong_SkillSystem
 {
-    /// <summary>스킬의 아군/적군/중립 식별 태그. 타게팅과 히트 판정에서 사용.</summary>
+
     public enum ESkillTeam
     {
         Neutral = 0,
