@@ -1,15 +1,17 @@
 # Unity Skill System Module
 
-> 던전앤파이터 스타일 2.5D 액션 RPG의 **데이터 주도형 스킬 시스템**과 **BT 기반 적 AI**를
-> 한 프로젝트에 묶어낸 Unity 클라이언트 개인 프로젝트.
+> **방향키로 뛰어다니며 Q/W/E/R로 스킬을 마구 난사해, 몰려드는 몬스터를 쓸어담는 2.5D 액션 게임.**
+> 스킬 하나하나는 코드가 아니라 **구글 시트에 정의한 모듈 조합(행동 트리)** 으로 만들어진다 —
+> 시트만 고쳐 새 스킬을 얼마든지 찍어낼 수 있는 **데이터 주도형 스킬 시스템**과 **BT 기반 적 AI**가 핵심.
 
 엔진: **Unity 2022 LTS / URP**
-스코프: 클라이언트 단일 씬, 60fps 기준 동작 확인.
+플레이 한 줄 요약: 방향키 이동 · 몬스터가 붙으면 서로 자동 평타 · **Q/W/E/R 스킬 난사** · 처치하면 몬스터 리스폰.
 
 ---
 
 ## 1. 프로젝트 한눈에
 
+- **플레이 루프**: 방향키로 이동 → 몬스터가 접근하면 서로 **자동 평타** → **Q/W/E/R로 스킬 난사**해 처치 → 몬스터는 풀에서 다시 스폰. "스킬 마구 쓰기"가 메인 재미이고, 스킬은 전부 DB에서 조립된다.
 - **장르 / 카메라**: 3D 월드 + 측면 시점(2.5D), DFO식 좌우 플립 캐릭터, 8방향 이동.
 - **무엇을 보여주는가**:
   1. 구글 시트 → JSON → 컴파일된 BT 노드 → 런타임 발동까지 이어지는 **데이터 파이프라인**.
@@ -123,19 +125,21 @@ TakeDamage → HP ≤ 0 → OnDied 발행 → (Spawner가 받아 SetActive(false
 
 ### 5.1 Skill System (`Assets/Scripts/SkillSystem/`)
 
-스킬 한 개를 **6개 역할 노드** 로 정의:
+스킬 한 개 = **행동 트리(BT)** 하나. 노드를 역할별로 조합해 정의한다 (`ESkillNodeType`):
 
-| 역할 | 단/복수 | 예시 노드 |
-|---|---|---|
-| Trigger | 1 | `OnAttackTrigger`, `OnTickTrigger`, `OnOreBreakTrigger` |
-| Targeting | 1 | `Self`, `AreaNear`, `ScreenAll`, `Ray`, `NearestDirection` |
-| Launch | 1 | `Instant`, `Straight`, `Parabolic`, `Curve` |
-| Hit | 1 | `Single`, `AoE`, `Beam`, `ChainLightning`, `DeathChain` |
-| Despawn | 1 | `Duration`, `OnHit`, `OnBounceLimit`, `OnWallHit` |
-| Side Effect | N | `ApplyBuffSelf`, `ApplyDebuffOnHit` |
+| 역할 | 노드 타입 |
+|---|---|
+| Composite | `Sequence`, `Selector`, `Parallel`, `Inverter` |
+| Decorator | `Cooldown`, `Chance` |
+| Trigger | `TriggerOnAttack`, `TriggerOnTick`, `TriggerOnOreBreak` |
+| Targeting | `TargetSelf`, `TargetNearest`, `TargetFarthest`, `TargetRandom`, `TargetAll`, `TargetNearestForward`, `TargetCone` |
+| Hit | `HitSingle`, `HitArea`, `HitBeam`, `HitChain`, `HitDeathBurst` |
+| Despawn | `DespawnAfterTime`, `DespawnAfterHits`, `DespawnAfterBounces`, `DespawnOnWall` |
+| Launch | `LaunchInstant`, `LaunchStraight`, `LaunchArc`, `LaunchCurve` |
+| Side Effect | `BuffSelf`, `DebuffOnHit` |
 
-레벨 modifier가 노드 param을 덮어쓰는 **(node default → level modifier → fallback)** 룩업 순서로
-"한 노드를 레벨업으로 강화" 패턴을 표준화했습니다.
+노드 param이 비어 있으면 **(노드 정적값 → 레벨 modifier → fallback)** 순서로 값을 찾는다 —
+"같은 노드를 레벨업으로 강화"를 표준화한 룩업. 자세한 작성법은 [8. 스킬 제작 가이드](#8-스킬-제작-가이드) 참고.
 
 **핵심 파일**
 - `SkillRegistry.cs` — 멱등 LoadAsync, 동시 호출 시 같은 Task 공유
@@ -144,7 +148,7 @@ TakeDamage → HP ≤ 0 → OnDied 발행 → (Spawner가 받아 SetActive(false
 - `Runtime/SkillEffect.cs` — 발사된 VFX 1개의 라이프 (모션 + Hit + Despawn)
 - `Runtime/ActiveStatusEffect.cs` — 버프/디버프 런타임 인스턴스, enter/tick/exit 라이프사이클
 
-**확장**: 새 Hit 패턴 추가 절차는 *시트 enum 추가 → SkillCompiler switch 한 줄 → SkillEffect.ProcessHit switch 한 줄* 의 3 step.
+**확장**: 새 Hit 패턴 추가 절차는 *시트 `_Enum` 탭에 enum 추가 → `BTBuilder.Create` switch 한 줄 → `SkillEffect.ProcessHit` switch 한 줄* 의 3 step.
 
 ### 5.2 Character / Input (`Assets/Scripts/Character/`, `Assets/Scripts/Input/`)
 
@@ -154,7 +158,8 @@ DFO식 2.5D 컨트롤:
 - **Facing**: 마우스 추격 회전 ❌. **좌우 플립 only** (`FacingSign ∈ {-1, +1}`). 이동 가로 입력 부호로 갱신.
 - **Attack**: 부채꼴 평타. 데이터는 인스펙터(빠른 튜닝), 발동은 `SkillObject` 외부.
 - **Input**: `IInputProvider` 추상화 — PC/모바일 구현 교체 가능. PC는 `KeyboardInputProvider`.
-- **Bindings**: `ScriptableObject` 매핑. 이동(WASD)과 스킬 슬롯(Q E R F Z X C V) 키 충돌 없게 배치.
+- **Bindings**: `ScriptableObject` 매핑. 이동(방향키)과 스킬 슬롯(Q W E R) 키 충돌 없게 배치.
+- **자동 평타**: 사거리 안에 적이 있으면 `PlayerController`가 매 프레임 가장 가까운 적을 향해 평타를 시도(쿨다운은 `CharacterAttack`이 게이트). 좌클릭 수동 평타도 유지.
 
 **Player.cs** 는 형제 컴포넌트를 `[SerializeField]`로 보관하고 `Init()`에서 일괄 상태 리셋(리스폰 멱등).
 외부에는 `Damageable` / `Skills` 만 노출 — **표면적 최소화**.
@@ -237,21 +242,92 @@ Unity 2022.3 LTS
 1. 프로젝트 클론 후 Unity Hub에서 열기.
 2. (선택) Google Sheets sync가 필요하면 `Tools > Jinhyeong > Google Sheet Loader` 에서 OAuth2 인증.
    (이미 동기화된 JSON이 `Resources/GoogleSheetData/`에 있어 sync 없이도 실행 가능)
-3. `Assets/Scenes/Main.unity` 오픈 → `Play`.
-4. 입력:
-   - **WASD**: 이동 (8방향)
-   - **마우스 좌클릭**: 평타
-   - **Q / E / R / F / Z / X / C / V**: 스킬 슬롯 (OBJ_Player의 `SkillObject.Loadout`에 등록한 스킬)
+3. `Assets/Scenes/Main.unity` 오픈 → `Play` → 시작 화면에서 Q/W/E/R 슬롯 스킬을 골라 **GAME START**.
+4. 조작:
+   - **방향키(↑↓←→)**: 이동 (8방향)
+   - **Q / W / E / R**: 스킬 시전 (시작 화면에서 슬롯별로 스킬 선택)
+   - **평타**: 사거리 안 적이 있으면 자동. (원하면 마우스 좌클릭으로 수동)
+   - **마우스 우클릭 드래그 / 휠**: 카메라 회전 · 줌
 
-### 새 스킬 장착하기
-
-1. Project 창 우클릭 → `Create > Jinhyeong > Skill > Skill Loadout` → `MyLoadout.asset`
-2. Entries에 `SkillId` / `Level` / `SlotKey` 추가
-3. `OBJ_Player.SkillObject.Loadout` 필드에 드래그
+> VFX 프리팹을 새로 만들거나 갱신하려면 `Tools > Skills > Rebuild VFX Prefabs (URP Particles)` 실행.
+> 스킬이 참조하는 `Visual` 키(`vfx_bolt` 등 9종)에 대응하는 파티클 프리팹을 생성하고 Addressables에 등록한다.
 
 ---
 
-## 8. 회고 — 시니어가 보면 잡힐 만한 부분
+## 8. 스킬 제작 가이드
+
+스킬은 **코드가 아니라 구글 시트(SSOT)** 에서 만든다. 클라이언트에는 스킬별 하드코딩이 없고,
+시트의 노드 조합을 런타임에 행동 트리로 컴파일해 발동한다. 새 스킬 = **시트에 행 추가**.
+
+### 8.1 3개 테이블
+
+| 시트 탭 | 역할 | 핵심 컬럼 |
+|---|---|---|
+| `Skill` | 스킬 메타 1행 | `id`, `name`, `desc`, `max_level`, `visual_path` |
+| `SkillLevel` | 스킬별 레벨 모디파이어 | `id`, `skill_id`, `level`, `modifier0..5`, `value0..5` |
+| `SkillBTNode` | 행동 트리 노드들 | `skill_id`, `node_id`, `parent_id`, `order`, `node_type`, `param0..4`, `value0..4` |
+
+### 8.2 트리 구조 규칙
+
+- 스킬 하나는 `SkillBTNode`에서 `skill_id`가 같은 행들의 집합. `parent_id`로 부모-자식을 엮고, 같은 부모의 자식은 `order`대로 실행된다.
+- `parent_id = 0` 인 노드가 루트. 보통 루트는 `Sequence`.
+- **표준형** (평타/틱 발동 스킬):
+
+```
+Sequence (node 1, parent 0)
+├─ order 0: Trigger      (TriggerOnAttack / TriggerOnTick)   ← 발동 게이트
+├─ order 1: Targeting    (TargetNearest 등)                  → ctx.Targets/Direction 채움
+├─ order 2: Hit          (HitArea 등)                        → 히트 규칙 등록
+├─ order 3: Despawn      (DespawnAfterHits 등)               → 소멸 규칙 등록
+├─ order 4: (선택) DebuffOnHit / BuffSelf
+└─ order 5: Launch       (LaunchInstant 등)                  → VFX 스폰 + 위 규칙 적용
+```
+
+Sequence는 자식이 하나라도 `Failure`면 멈춘다 → **Trigger가 실패하면 그 프레임은 발동 안 함**.
+
+### 8.3 파라미터 (`ESkillParamKey`)
+
+노드별로 자주 쓰는 param: `Cooldown`(틱 주기/쿨), `Chance`(발동 확률 %), `Range`(탐색 반경),
+`Damage`, `Radius`(피해 범위), `Speed`·`MaxDistance`·`ArcHeight`(발사 모션), `MaxBounces`(체인 연쇄 **총 대상 수** — 3이면 3명),
+`MaxPerTarget`(다중 타겟 수), `Value`(디스폰 임계), `Visual`(VFX 키), `BuffId`/`DebuffId`.
+
+**레벨 스케일 규칙**: `SkillBTNode`의 `value`를 **비워두면** 그 param은
+해당 레벨의 `SkillLevel` modifier 값을 따라간다(레벨업으로 강화). 값을 넣으면 고정값.
+예) `HitArea` 노드에 `Damage`(빈 값) + `Radius=2.5` → 데미지는 레벨별, 반경은 항상 2.5.
+
+### 8.4 슬롯(Q/W/E/R) vs 자동 발동
+
+- 스킬을 **슬롯 키에 배치**하면(로드아웃 `SlotKey`) 그 키를 눌렀을 때만 발동하는 **수동 스킬**이 된다.
+- 수동 발동은 트리의 **Trigger / Chance / Cooldown 게이트를 통과**시킨다 — 키 입력 자체가 발동 조건(`SkillContext.ManualCast`). 그래서 "마구 난사"가 된다.
+- `SlotKey`가 없으면(`None`) 매 프레임 자동으로 틱하는 **자동 스킬** — 이때는 Trigger/Cooldown/Chance 게이트가 그대로 살아있다.
+
+### 8.5 작성 예 — `Split Bolt` (id 1003)
+
+`Skill`: `1003 | Split Bolt | OnAttack 시 전방 직선 발사 | 5 |`
+
+`SkillBTNode` (skill_id=1003):
+
+| node_id | parent_id | order | node_type | param0/value0 | param1/value1 | param2/value2 |
+|---|---|---|---|---|---|---|
+| 1 | 0 | 0 | `Sequence` | | | |
+| 2 | 1 | 0 | `TriggerOnAttack` | `Chance` / (빈값→레벨) | | |
+| 3 | 1 | 1 | `TargetNearestForward` | `Range` / (빈값→레벨) | | |
+| 4 | 1 | 2 | `HitArea` | `Damage` / (빈값→레벨) | `Radius` / `0.5` | |
+| 5 | 1 | 3 | `DespawnAfterHits` | `Value` / `1` | | |
+| 6 | 1 | 4 | `LaunchStraight` | `Speed` / `15` | `MaxDistance` / `10` | `Visual` / `vfx_bolt` |
+
+`SkillLevel` (skill_id=1003, level 1): `Chance=12`, `Cooldown=0.2`, `Range=6`.
+
+### 8.6 시트 → 게임 반영 절차
+
+1. 구글 시트(SSOT)의 `Skill` / `SkillLevel` / `SkillBTNode` 탭에 행 추가.
+2. Unity에서 `Tools > Jinhyeong > Google Sheet Loader`로 sync → `Resources/GoogleSheetData/*.json` 갱신. *(생성된 JSON은 직접 편집하지 않는다.)*
+3. 새 `Visual` 키를 썼다면 `Tools > Skills > Rebuild VFX Prefabs` 실행(프리팹 + Addressables 등록).
+4. Play → 시작 화면에서 슬롯에 새 스킬을 골라 시전.
+
+---
+
+## 9. 회고 — 시니어가 보면 잡힐 만한 부분
 
 스스로 개선 여지가 보이는 지점들:
 
@@ -263,7 +339,7 @@ Unity 2022.3 LTS
 
 ---
 
-## 9. 라이선스
+## 10. 라이선스
 
 개인 학습용 프로젝트.
 
