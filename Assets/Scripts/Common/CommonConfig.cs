@@ -45,6 +45,9 @@ namespace Jinhyeong_Common
 
             public const float FleeHpPercent = 0.2f;
             public const float FleeSpeedMultiplier = 1.3f;
+            public const float FleeDuration = 2f;
+            public const float FleeReengageTime = 3f;
+            public const float FleeSafeDistance = 7f;
 
             public const float PatrolRadius = 5f;
             public const float PatrolArrivalDistance = 0.4f;

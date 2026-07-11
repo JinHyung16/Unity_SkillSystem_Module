@@ -28,6 +28,9 @@ namespace Jinhyeong_AI
         private Damageable _target;
         private bool _isAware;
         private float _attackTimer;
+        private bool _isFleeing;
+        private float _fleeEndTime;
+        private float _fleeReengageUntil;
         private Vector3 _patrolTarget;
         private bool _hasPatrolTarget;
         private float _patrolWaitTimer;
@@ -55,6 +58,9 @@ namespace Jinhyeong_AI
             _target = null;
             _isAware = false;
             _attackTimer = 0f;
+            _isFleeing = false;
+            _fleeEndTime = 0f;
+            _fleeReengageUntil = 0f;
             _hasPatrolTarget = false;
             _patrolWaitTimer = 0f;
             _spawnPosition = transform.position;
@@ -136,20 +142,48 @@ namespace Jinhyeong_AI
 
         private bool ShouldFlee()
         {
-            return (_self.Hp / CommonConfig.Enemy.Hp) <= CommonConfig.Enemy.FleeHpPercent;
+            bool lowHp = (_self.Hp / CommonConfig.Enemy.Hp) <= CommonConfig.Enemy.FleeHpPercent;
+            if (lowHp == false)
+            {
+                _isFleeing = false;
+                return false;
+            }
+
+            if (_isFleeing)
+                return true;
+
+            if (Time.time < _fleeReengageUntil)
+                return false;
+
+            _isFleeing = true;
+            _fleeEndTime = Time.time + CommonConfig.Enemy.FleeDuration;
+            return true;
         }
 
         private EBTStatus TickFlee(float dt)
         {
             if (_target == null)
+            {
+                _isFleeing = false;
                 return EBTStatus.Failure;
+            }
 
             Vector3 toMe = transform.position - _target.transform.position;
             toMe.y = 0f;
-            if (toMe.sqrMagnitude < 0.0001f)
-                toMe = Random.insideUnitSphere;
+            float dist = toMe.magnitude;
 
-            Vector3 dir = toMe.normalized;
+            bool timeUp = Time.time >= _fleeEndTime;
+            bool safe = dist >= CommonConfig.Enemy.FleeSafeDistance;
+            if (timeUp || safe)
+            {
+                _isFleeing = false;
+                _fleeReengageUntil = Time.time + CommonConfig.Enemy.FleeReengageTime;
+                _motor.MoveAxis = Vector2.zero;
+                return EBTStatus.Failure;
+            }
+
+            Vector3 dir = dist < 0.0001f ? Random.insideUnitSphere : toMe / dist;
+            dir.y = 0f;
             _motor.SpeedMultiplier = CommonConfig.Enemy.FleeSpeedMultiplier;
             _motor.MoveAxis = new Vector2(dir.x, dir.z);
             FaceDir(dir);
