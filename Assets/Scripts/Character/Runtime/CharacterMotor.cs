@@ -12,7 +12,7 @@ namespace Jinhyeong_Character
         [HideInInspector] public float SpeedMultiplier = 1f;
 
         private CharacterController _cc;
-        private AABBCollider _ownBox;
+        private OBBCollider _ownBox;
         private float _verticalVelocity;
 
         public Vector2 MoveAxis { get; set; }
@@ -21,7 +21,7 @@ namespace Jinhyeong_Character
         private void Awake()
         {
             _cc = GetComponent<CharacterController>();
-            _ownBox = GetComponentInChildren<AABBCollider>();
+            _ownBox = GetComponentInChildren<OBBCollider>();
         }
 
         private void Update()
@@ -49,7 +49,7 @@ namespace Jinhyeong_Character
             Vector3 planarDelta = planar * Time.deltaTime;
 
             float radius = _cc.radius;
-            Vector3 resolved = AABBPhysics.ResolvePlanarMove(transform.position, planarDelta, radius, _ownBox);
+            Vector3 resolved = OBBPhysics.ResolvePlanarMove(transform.position, planarDelta, radius, _ownBox);
             bool blocked = (resolved - planarDelta).sqrMagnitude > 1e-8f;
 
             Vector3 delta = new Vector3(resolved.x, _verticalVelocity * Time.deltaTime, resolved.z);

@@ -21,7 +21,7 @@ namespace Jinhyeong_AI
         private CharacterMotor _motor;
         private CharacterFacing _facing;
         private BehaviorTreeRunner _runner;
-        private AABBCollider _ownBox;
+        private OBBCollider _ownBox;
 
         private Vector3 _spawnPosition;
 
@@ -46,7 +46,7 @@ namespace Jinhyeong_AI
             _motor  = GetComponent<CharacterMotor>();
             _facing = GetComponent<CharacterFacing>();
             _runner = GetComponent<BehaviorTreeRunner>();
-            _ownBox = GetComponentInChildren<AABBCollider>();
+            _ownBox = GetComponentInChildren<OBBCollider>();
 
             _spawnPosition = transform.position;
 
@@ -335,7 +335,7 @@ namespace Jinhyeong_AI
                 if (dist < 0.2f)
                     continue;
 
-                if (AABBPhysics.SegmentBlockedXZ(transform.position, candidate, 0.5f, _ownBox))
+                if (OBBPhysics.SegmentBlockedXZ(transform.position, candidate, 0.5f, _ownBox))
                     continue;
 
                 _patrolTarget = candidate;
