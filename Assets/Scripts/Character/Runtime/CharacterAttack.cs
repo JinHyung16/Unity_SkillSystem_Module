@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Jinhyeong_SkillSystem;
@@ -14,6 +15,9 @@ namespace Jinhyeong_Character
         [HideInInspector] public float HalfAngleDeg;
         [HideInInspector] public float Cooldown;
 
+        /// <summary>근접 공격 스윙이 실제로 발동한 순간(쿨다운/스턴 통과 후) 발생. 히트 여부와 무관하게 모션 재생용.</summary>
+        public event Action OnFired;
+
         private SkillObject _caster;
         private float _nextReadyTime;
 
@@ -29,6 +33,9 @@ namespace Jinhyeong_Character
             if (Time.time < _nextReadyTime)
                 return false;
             _nextReadyTime = Time.time + Cooldown;
+
+            if (OnFired != null)
+                OnFired.Invoke();
 
             if (_caster != null)
                 _caster.NotifyAttack();
